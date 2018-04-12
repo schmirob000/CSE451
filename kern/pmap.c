@@ -262,7 +262,7 @@ page_init(void)
     bool ext = (EXTPHYSMEM <= (uint32_t) &pages[i] &&
                 (uint32_t) boot_alloc(0) > (uint32_t) &pages[i]);
 
-    if (i == 0 || avail || !hol || !ext) {
+    if (i != 0 && avail &&  !hol && !ext) {
 		  pages[i].pp_ref = 0;
 		  pages[i].pp_link = page_free_list;
 		  page_free_list = &pages[i];
