@@ -244,25 +244,30 @@ page_init(void)
   nfreepages = 0;
 	size_t i;
 	for (i = 0; i < npages; i++) {
-
     struct e820_entry *e;
     size_t mem = 0, mem_max = -KERNBASE;
-
+    physaddr_t page_addr = page2pa(&pages[i]);
     bool avail = true;
     e = e820_map.entries;
     for (int j = 0; j != e820_map.nr; ++j, ++e) {
-      bool in_loc = (e->addr + e->len > (uint32_t) &pages[i] ||
-                     e->addr <= (uint32_t) &pages[i]);
+      bool in_loc = (e->addr + e->len > (uint32_t) page_addr &&
+                     e->addr <= (uint32_t) page_addr);
+      in_loc = in_loc || (e->addr + e->len > (uint32_t) page_addr + PGSIZE &&
+                     e->addr <= (uint32_t) page_addr + PGSIZE);
       if (in_loc)
         avail = avail && (e->type == E820_AVAILABLE);
     }
+    physaddr_t boot_addr = PADDR(boot_alloc(0));
 
-    bool hol = (IOPHYSMEM <= (uint32_t) &pages[i] &&
-                EXTPHYSMEM > (uint32_t) &pages[i]);
-    bool ext = (EXTPHYSMEM <= (uint32_t) &pages[i] &&
-                (uint32_t) boot_alloc(0) > (uint32_t) &pages[i]);
-
-    if (i != 0 && avail &&  !hol && !ext) {
+    bool hol = ((IOPHYSMEM <= (uint32_t) page_addr &&
+                EXTPHYSMEM > (uint32_t) page_addr)) ||
+               ((IOPHYSMEM <= (uint32_t) page_addr + PGSIZE &&
+                EXTPHYSMEM > (uint32_t) page_addr + PGSIZE));
+    bool ext = (EXTPHYSMEM <= (uint32_t) page_addr &&
+                ((uint32_t) boot_addr > (uint32_t) page_addr)) ||
+                (EXTPHYSMEM <= (uint32_t) page_addr + PGSIZE &&
+                ((uint32_t) boot_addr > (uint32_t) page_addr + PGSIZE));
+    if (i != 0 && avail && !hol && !ext) {
 		  pages[i].pp_ref = 0;
 		  pages[i].pp_link = page_free_list;
 		  page_free_list = &pages[i];
@@ -287,11 +292,14 @@ struct PageInfo *
 page_alloc(int alloc_flags)
 {
 	// Fill this function in
-  struct PageInfo *ret = pages[0];
-  ret->pplink = NULL;
+	if (page_free_list == NULL)
+    return NULL;
+  struct PageInfo *ret = page_free_list;
+  page_free_list = ret->pp_link;
+  ret->pp_link = NULL;
 
-  if (alloc_flags & ALLOC_ZERO)
-	  memset(page2kva(ret), 0, npages*sizeof(struct PageInfo));
+  if (alloc_flags && ALLOC_ZERO)
+	  memset(page2kva(ret), 0, PGSIZE);
   nfreepages--;
 
 	return ret;
@@ -307,7 +315,11 @@ page_free(struct PageInfo *pp)
 	// Fill this function in
 	// Hint: You may want to panic if pp->pp_ref is nonzero or
 	// pp->pp_link is not NULL.
-
+	if (pp == NULL || pp->pp_ref != 0 || pp->pp_link != NULL)
+    panic("Invalid pp passed to page_free");
+  pp->pp_link = page_free_list;
+  page_free_list = pp;
+  nfreepages++;
 }
 
 //
