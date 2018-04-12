@@ -298,7 +298,7 @@ page_alloc(int alloc_flags)
   page_free_list = ret->pp_link;
   ret->pp_link = NULL;
 
-  if (alloc_flags && ALLOC_ZERO)
+  if (alloc_flags & ALLOC_ZERO)
 	  memset(page2kva(ret), 0, PGSIZE);
   nfreepages--;
 
@@ -358,8 +358,15 @@ page_decref(struct PageInfo* pp)
 pte_t *
 pgdir_walk(pde_t *pgdir, const void *va, int create)
 {
-	// Fill this function in
-	return NULL;
+	pde_t *table_addr = (pde_t *)pgdir[PDX(va)];
+  uint32_t *pgtable_ppn = (uint32_t *) PGNUM(table_addr);
+  pte_t *table_entry = (pte_t *) pgtable_ppn[PTX(va)];
+  if (table_entry == NULL) {
+    if (!create) return NULL;
+    struct PageInfo *page = page_alloc(PGOFF(va));//Maybe of table_entry?
+    page->pp_ref++;//Maybe outside the if
+  }
+	return table_entry;
 }
 
 //
