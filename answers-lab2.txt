@@ -1,0 +1,2 @@
+Question 1: uintptr_t (dereferencing physaddr_t is not right)
+
