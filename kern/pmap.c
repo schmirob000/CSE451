@@ -330,11 +330,8 @@ page_free(struct PageInfo *pp)
 void
 page_decref(struct PageInfo* pp)
 {
-    cprintf("DECREF ");
-	if (--pp->pp_ref == 0) {
+	if (--pp->pp_ref == 0)
 		page_free(pp);
-    cprintf("FREE ");
-  }
 }
 
 // Given 'pgdir', a pointer to a page directory, pgdir_walk returns
@@ -431,7 +428,6 @@ page_insert(pde_t *pgdir, struct PageInfo *pp, void *va, int perm)
 	// Fill this function in
   //page_remove(pgdir, va); //No
 	pte_t *pte = pgdir_walk(pgdir, va, 1);
-  //cprintf("%d ", !pte);
   if (!pte) return -1*E_NO_MEM;
 
   pp->pp_ref++;
@@ -459,10 +455,10 @@ page_insert(pde_t *pgdir, struct PageInfo *pp, void *va, int perm)
 struct PageInfo *
 page_lookup(pde_t *pgdir, void *va, pte_t **pte_store)
 {
-	pte_t *pte = pgdir_walk(pgdir, va, 0); 
+	pte_t *pte = pgdir_walk(pgdir, va, 0);
   if (!pte || !(*pte & PTE_P)) return NULL;
   if (pte_store) {
-	  *pte_store = pte; 
+	  *pte_store = pte;
   }
   struct PageInfo *ret = pa2page(*pte);
 	return ret;
@@ -487,10 +483,9 @@ void
 page_remove(pde_t *pgdir, void *va)
 {
 	// Fill this function in
-  pte_t *pte;	
+  pte_t *pte;
   struct PageInfo *pi = page_lookup(pgdir, va, &pte);
   if (pi) {
-    cprintf("Pi->pp_ref %d ", pi->pp_ref);
     bool tlbin = false;
     if (pi->pp_ref == 1) tlbin = true;
 
@@ -818,7 +813,6 @@ check_page(void)
 	assert((pp = page_alloc(0)) && pp == pp2);
 
 	// unmapping pp1 at 0 should keep pp1 at PGSIZE
-	cprintf("first actual page remove ");
 	page_remove(kern_pgdir, 0x0);
 	assert(check_va2pa(kern_pgdir, 0x0) == ~0);
 	assert(check_va2pa(kern_pgdir, PGSIZE) == page2pa(pp1));
@@ -826,7 +820,6 @@ check_page(void)
 	assert(pp2->pp_ref == 0);
 
 	// test re-inserting pp1 at PGSIZE
-	cprintf("Before the crash ");
 	assert(page_insert(kern_pgdir, pp1, (void*) PGSIZE, 0) == 0);
 	assert(pp1->pp_ref);
 	assert(pp1->pp_link == NULL);
