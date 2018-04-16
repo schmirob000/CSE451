@@ -330,8 +330,11 @@ page_free(struct PageInfo *pp)
 void
 page_decref(struct PageInfo* pp)
 {
-	if (--pp->pp_ref == 0)
+    cprintf("DECREF ");
+	if (--pp->pp_ref == 0) {
 		page_free(pp);
+    cprintf("FREE ");
+  }
 }
 
 // Given 'pgdir', a pointer to a page directory, pgdir_walk returns
@@ -360,8 +363,8 @@ pte_t *
 pgdir_walk(pde_t *pgdir, const void *va, int create)
 {
 	pde_t *table_addr = (pde_t *) &pgdir[PDX(va)];
-  pte_t *pgtab;
-  if(*table_addr & PTE_P) {
+  pte_t *pgtab = KADDR(PTE_ADDR(*table_addr));;
+  if(*table_addr & PTE_P && *pgtab & PTE_P) {
     pgtab = KADDR(PTE_ADDR(*table_addr));
   }
   else {
@@ -426,17 +429,18 @@ int
 page_insert(pde_t *pgdir, struct PageInfo *pp, void *va, int perm)
 {
 	// Fill this function in
+  //page_remove(pgdir, va); //No
 	pte_t *pte = pgdir_walk(pgdir, va, 1);
+  //cprintf("%d ", !pte);
   if (!pte) return -1*E_NO_MEM;
-  if (PGOFF(*pte) & PTE_P) {
-    cprintf("%d", pp->pp_ref);
-    page_remove(pgdir, va);
-    cprintf("%d", pp->pp_ref);
-    tlb_invalidate(pgdir, va);
-  }
-  uint32_t pa = page2pa(pp);
-  *pte = (pte_t) pa | perm | PTE_P;
+
   pp->pp_ref++;
+  if (*pte & PTE_P) {
+    page_remove(pgdir, va);
+  }
+
+  physaddr_t pa = page2pa(pp);
+  *pte = pa | perm | PTE_P;
 
 	return 0;
 }
@@ -456,11 +460,11 @@ struct PageInfo *
 page_lookup(pde_t *pgdir, void *va, pte_t **pte_store)
 {
 	pte_t *pte = pgdir_walk(pgdir, va, 0); 
-  if (!(PGOFF(*pte) & PTE_P)) return NULL;
+  if (!pte || !(*pte & PTE_P)) return NULL;
   if (pte_store) {
 	  *pte_store = pte; 
   }
-  struct PageInfo *ret = pa2page(PGNUM(*pte));
+  struct PageInfo *ret = pa2page(*pte);
 	return ret;
 }
 
@@ -483,13 +487,16 @@ void
 page_remove(pde_t *pgdir, void *va)
 {
 	// Fill this function in
-  pte_t *pte = (pte_t*) 1;	
+  pte_t *pte;	
   struct PageInfo *pi = page_lookup(pgdir, va, &pte);
   if (pi) {
-    cprintf("pi");
+    cprintf("Pi->pp_ref %d ", pi->pp_ref);
+    bool tlbin = false;
+    if (pi->pp_ref == 1) tlbin = true;
+
     page_decref(pi);
     *pte = 0;
-    tlb_invalidate(pgdir, va);
+    if (tlbin) tlb_invalidate(pgdir, va);
   }
 }
 
@@ -811,6 +818,7 @@ check_page(void)
 	assert((pp = page_alloc(0)) && pp == pp2);
 
 	// unmapping pp1 at 0 should keep pp1 at PGSIZE
+	cprintf("first actual page remove ");
 	page_remove(kern_pgdir, 0x0);
 	assert(check_va2pa(kern_pgdir, 0x0) == ~0);
 	assert(check_va2pa(kern_pgdir, PGSIZE) == page2pa(pp1));
@@ -818,6 +826,7 @@ check_page(void)
 	assert(pp2->pp_ref == 0);
 
 	// test re-inserting pp1 at PGSIZE
+	cprintf("Before the crash ");
 	assert(page_insert(kern_pgdir, pp1, (void*) PGSIZE, 0) == 0);
 	assert(pp1->pp_ref);
 	assert(pp1->pp_link == NULL);
