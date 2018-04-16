@@ -360,8 +360,8 @@ pte_t *
 pgdir_walk(pde_t *pgdir, const void *va, int create)
 {
 	pde_t *table_addr = (pde_t *) &pgdir[PDX(va)];
-  pte_t *pgtab = KADDR(PTE_ADDR(*table_addr));;
-  if(*table_addr & PTE_P && *pgtab & PTE_P) {
+  pte_t *pgtab;
+  if(*table_addr & PTE_P) {
     pgtab = KADDR(PTE_ADDR(*table_addr));
   }
   else {
@@ -426,9 +426,9 @@ int
 page_insert(pde_t *pgdir, struct PageInfo *pp, void *va, int perm)
 {
 	// Fill this function in
-  //page_remove(pgdir, va); //No
 	pte_t *pte = pgdir_walk(pgdir, va, 1);
-  if (!pte) return -1*E_NO_MEM;
+  if (!pte)
+    return -1*E_NO_MEM;
 
   pp->pp_ref++;
   if (*pte & PTE_P) {
@@ -486,12 +486,9 @@ page_remove(pde_t *pgdir, void *va)
   pte_t *pte;
   struct PageInfo *pi = page_lookup(pgdir, va, &pte);
   if (pi) {
-    bool tlbin = false;
-    if (pi->pp_ref == 1) tlbin = true;
-
     page_decref(pi);
     *pte = 0;
-    if (tlbin) tlb_invalidate(pgdir, va);
+    tlb_invalidate(pgdir, va);
   }
 }
 
