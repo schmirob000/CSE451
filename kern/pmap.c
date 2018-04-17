@@ -162,9 +162,8 @@ mem_init(void)
 	//      (ie. perm = PTE_U | PTE_P)
 	//    - pages itself -- kernel RW, user NONE
 	// Your code goes here:
-  struct PageInfo *pp_pages = page_alloc(0);
-	// memset(page2kva(pp_pages), pages, PGSIZE);
-  page_insert(kern_pgdir, pp_pages, (void*) UPAGES, PTE_U | PTE_P);
+  int np = ROUNDUP(npages*sizeof(struct PageInfo), PGSIZE);	
+  boot_map_region(kern_pgdir, UPAGES, np/PGSIZE, PADDR(pages), PTE_U | PTE_P);
 
 	//////////////////////////////////////////////////////////////////////
 	// Use the physical memory that 'bootstack' refers to as the kernel
@@ -177,9 +176,11 @@ mem_init(void)
 	//       overwrite memory.  Known as a "guard page".
 	//     Permissions: kernel RW, user NONE
 	// Your code goes here:
-  struct PageInfo *pp_bs = page_alloc(0);
-	// memset(page2kva(pp_bs), bootstack, PGSIZE);
-  page_insert(kern_pgdir, pp_bs, (void*) KSTACKTOP, PTE_P);
+	np = ROUNDUP(KSTKSIZE, PGSIZE);
+  boot_map_region(kern_pgdir, KSTACKTOP-KSTKSIZE, np/PGSIZE, PADDR(bootstack), PTE_P);
+
+	//np = ROUNDUP((PTSIZE-KSTKSIZE), PGSIZE);
+  //boot_map_region(kern_pgdir, KSTACKTOP-PTSIZE, np/PGSIZE, 0, 0);
 
 	//////////////////////////////////////////////////////////////////////
 	// Map all of physical memory at KERNBASE.
@@ -189,9 +190,8 @@ mem_init(void)
 	// we just set up the mapping anyway.
 	// Permissions: kernel RW, user NONE
 	// Your code goes here:
-  struct PageInfo *pp_kb= page_alloc(0);
-	// memset(page2kva(kb), something, PGSIZE); something something
-  page_insert(kern_pgdir, pp_kb, (void*) KERNBASE, PTE_U | PTE_P);
+	np = ROUNDUP((0xffffffff-KERNBASE), PGSIZE);
+  boot_map_region(kern_pgdir, KERNBASE, np / PGSIZE, 0, PTE_P);
 
 	// Check that the initial page directory has been set up correctly.
 	check_kern_pgdir();
@@ -401,8 +401,9 @@ boot_map_region(pde_t *pgdir, uintptr_t va, size_t size, physaddr_t pa, int perm
 {
 	for (int i = 0; i < size; i++) {
     uint32_t vai = (uint32_t) va + i*PGSIZE;
+    uint32_t pai = (uint32_t) pa + i*PGSIZE;
     pte_t *ppe = pgdir_walk(pgdir, (void *) vai, 1);
-    *ppe = (pte_t) PGADDR(0, pa+i*PGSIZE, perm | PTE_P);
+    *ppe = (pte_t) pai | perm;
   }
 }
 
@@ -675,7 +676,6 @@ check_kern_pgdir(void)
 	n = ROUNDUP(npages*sizeof(struct PageInfo), PGSIZE);
 	for (i = 0; i < n; i += PGSIZE)
 		assert(check_va2pa(pgdir, UPAGES + i) == PADDR(pages) + i);
-
 
 	// check phys mem
 	for (i = 0; i < npages * PGSIZE; i += PGSIZE)
