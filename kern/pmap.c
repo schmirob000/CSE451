@@ -163,7 +163,7 @@ mem_init(void)
 	//    - pages itself -- kernel RW, user NONE
 	// Your code goes here:
   int np = ROUNDUP(npages*sizeof(struct PageInfo), PGSIZE);	
-  boot_map_region(kern_pgdir, UPAGES, np/PGSIZE, PADDR(pages), PTE_U | PTE_W | PTE_P);
+  boot_map_region(kern_pgdir, UPAGES, np/PGSIZE, PADDR(pages), PTE_U | PTE_P);
 
 	//////////////////////////////////////////////////////////////////////
 	// Use the physical memory that 'bootstack' refers to as the kernel
