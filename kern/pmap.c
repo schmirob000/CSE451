@@ -163,7 +163,7 @@ mem_init(void)
 	//    - pages itself -- kernel RW, user NONE
 	// Your code goes here:
   int np = ROUNDUP(npages*sizeof(struct PageInfo), PGSIZE);	
-  boot_map_region(kern_pgdir, UPAGES, np/PGSIZE, PADDR(pages), PTE_U | PTE_P);
+  boot_map_region(kern_pgdir, UPAGES, np/PGSIZE, PADDR(pages), PTE_U | PTE_W | PTE_P);
 
 	//////////////////////////////////////////////////////////////////////
 	// Use the physical memory that 'bootstack' refers to as the kernel
@@ -177,7 +177,7 @@ mem_init(void)
 	//     Permissions: kernel RW, user NONE
 	// Your code goes here:
 	np = ROUNDUP(KSTKSIZE, PGSIZE);
-  boot_map_region(kern_pgdir, KSTACKTOP-KSTKSIZE, np/PGSIZE, PADDR(bootstack), PTE_P);
+  boot_map_region(kern_pgdir, KSTACKTOP-KSTKSIZE, np/PGSIZE, PADDR(bootstack), PTE_P | PTE_W);
 
 	//np = ROUNDUP((PTSIZE-KSTKSIZE), PGSIZE);
   //boot_map_region(kern_pgdir, KSTACKTOP-PTSIZE, np/PGSIZE, 0, 0);
@@ -191,7 +191,7 @@ mem_init(void)
 	// Permissions: kernel RW, user NONE
 	// Your code goes here:
 	np = ROUNDUP((0xffffffff-KERNBASE), PGSIZE);
-  boot_map_region(kern_pgdir, KERNBASE, np / PGSIZE, 0, PTE_P);
+  boot_map_region(kern_pgdir, KERNBASE, np / PGSIZE, 0, PTE_P | PTE_W);
 
 	// Check that the initial page directory has been set up correctly.
 	check_kern_pgdir();
