@@ -1,0 +1,31 @@
+Question 1: uintptr_t (dereferencing physaddr_t is not right)
+
+Question 2: UPAGES (where pages[] is located) and the 64 pages above it are 
+mapped to the physical addresses of pages and the 64 pages above that.
+KSTACKTOP and the 8 pages below it are mapped to the physical addresses of 
+bootstack and the 8 pages above that.
+KERNBASE and the 65536 pages above it are mapped to the physical addresses of 0 and the 65536 pages above that. 
+
+Question 3: PTE_U, the user permission bit, is not set for kernel memory. 
+This means that if the user tries to access kernel memory, the CPU will fault.
+
+Question 4: 4 GiB, because that is as far as we mapped out 4 GiB of virtual
+address space to 4 GiB of physical memory, so there will be no virtual address
+mappings to memory over 4 GiB.
+
+Question 5: Based on the number of free pages (32479), we have 3.87 GiB of 
+free memory (of our 4 Gib). The .13 GiB of memory used is being used to hold
+the kernel (including its stack), the two-level page table, and various devices
+(including but not limited to I/O). The 3.87 GiB of free memory is mostly the 
+user stack and heap (and other misc user memory below the heap), 
+with some remapped physical memory that can only be used by the kernel. 
+
+Question 6: We can keep running at a low EIP because the kernel is mapped both
+to a high memory location and to the identity mapping memory location, which 
+is where we are currently. We have to transition in order to have a high kernel
+address, and we need the identity mapping in order to execute the last few 
+instructions which set up a pointer to the page directory where the CPU expects
+it. Once the page directory is set in the CPU register we do not use the identity mapping (low eip) again. 
+
+Hours spent: 16
+Team names: Robin Schmit, Sarp Orgul
