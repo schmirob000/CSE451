@@ -120,12 +120,10 @@ env_init(void)
   //set its env_id to 0;
   //set env_free_list* = new env;
   for (int i = NENV-1; i >= 0; i--) {
-    struct Env e = envs[i];
-    e.env_id = 0;
-    e.env_link = env_free_list;
-    env_free_list = &e;
-    //set its env_id to 0;
-    //set env[i-1]->env_link = new_env;
+    envs[i].env_id = 0;
+    envs[i].env_link = env_free_list;
+    envs[i].env_status = ENV_FREE;
+    env_free_list = &envs[i];
   }
 	// Per-CPU part of the initialization
 	env_init_percpu();
@@ -191,9 +189,7 @@ env_setup_vm(struct Env *e)
 	// LAB 3: Your code here.
 	pde_t *env_pgdir = (pde_t*) page2kva(p);
   p->pp_ref++;
-  for (int i = UTOP; i < 0xffffffff; i++) {
-    env_pgdir[i] = kern_pgdir[i];
-  }
+  memcpy(env_pgdir, kern_pgdir, PGSIZE); 
   e->env_pgdir = env_pgdir;
 	// UVPT maps the env's own page table read-only.
 	// Permissions: kernel R, user R
@@ -285,6 +281,7 @@ region_alloc(struct Env *e, void *va, size_t len)
   for(uint32_t i = ROUNDDOWN((uint32_t) va, PGSIZE); 
         i < ROUNDUP((uint32_t)va+len, PGSIZE); 
         i+=PGSIZE) {
+    cprintf("a");
 	  struct PageInfo *pp = page_alloc(0);
     if (!pp) panic("Out of Memory");
     if(page_insert(e->env_pgdir, pp, (void*) i, PTE_P | PTE_U | PTE_W) == -1*E_NO_MEM)
@@ -356,26 +353,21 @@ load_icode(struct Env *e, uint8_t *binary)
   
   for (; ph < eph; ph++) {
     region_alloc(e, (void*) ph->p_va, ph->p_memsz);
-    if (ph->p_type == ELF_PROG_LOAD) {
-      uint32_t ph_start = ROUNDDOWN(ph->p_va, PGSIZE); 
-      uint32_t ph_end = ROUNDUP(ph->p_va+ph->p_memsz, PGSIZE);
-      uint32_t start_diff = ph->p_va - ph_start;
-      uint32_t end_diff = ph_end - (ph->p_va+ph->p_memsz);
 
-      for (int i = ph_start; i < ph_end; i += PGSIZE) {
-        struct PageInfo *pp = page_lookup(e->env_pgdir, (void*) ph->p_va, NULL);
-        void* kva = page2kva(pp);
-        memset(kva, 0, PGSIZE);
-        //if(i < ph->p_va + ) {
-          memcpy(kva+start_diff, binary+ph->p_offset, ph->p_filesz);
-        //}
-      }
+    if (ph->p_type == ELF_PROG_LOAD) {
+      lcr3(PADDR(e->env_pgdir));
+      memset((void*) ph->p_va, 0, ph->p_memsz);
+      memcpy((void*) ph->p_va, binary+ph->p_offset, ph->p_filesz);
+      lcr3(PADDR(kern_pgdir));
     } 
   }
   // Now map one page for the program's initial stack
 	// at virtual address USTACKTOP - PGSIZE.
 
 	// LAB 3: Your code here.
+	region_alloc(e, (void*) USTACKTOP - PGSIZE, PGSIZE);
+  e->env_tf.tf_eip = bin->e_entry;
+  e->env_tf.tf_eflags = bin->e_flags;
 }
 
 //
@@ -389,6 +381,11 @@ void
 env_create(uint8_t *binary, enum EnvType type)
 {
 	// LAB 3: Your code here.
+	struct Env *e;
+	env_alloc(&e, 0);
+  e->env_type = type;
+  
+  load_icode(e, binary);
 }
 
 //
@@ -505,7 +502,17 @@ env_run(struct Env *e)
 	//	e->env_tf to sensible values.
 
 	// LAB 3: Your code here.
-
-	panic("env_run not yet implemented");
+  
+  // step 1
+  if (curenv && curenv->env_status == ENV_RUNNING) {
+    curenv->env_status = ENV_RUNNABLE;
+  }
+  curenv = e;
+  curenv->env_status = ENV_RUNNING;
+  curenv->env_runs++;
+  lcr3(PADDR(curenv->env_pgdir));
+ 
+  // step 2
+  env_pop_tf(&curenv->env_tf); 
 }
 

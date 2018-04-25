@@ -180,7 +180,7 @@ mem_init(void)
 	//    - envs itself -- kernel RW, user NONE
 	// LAB 3: Your code here.
 	np = ROUNDUP(NENV*sizeof(struct Env), PGSIZE);
-  boot_map_region(kern_pgdir, UENVS, np/PGSIZE, PADDR(envs), PTE_P | PTE_W | PTE_U);
+  boot_map_region(kern_pgdir, UENVS, np/PGSIZE, PADDR(envs), PTE_P | PTE_U);
 
 	//////////////////////////////////////////////////////////////////////
 	// Use the physical memory that 'bootstack' refers to as the kernel
