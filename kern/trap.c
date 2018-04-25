@@ -184,6 +184,7 @@ trap_dispatch(struct Trapframe *tf)
 
   if (tf->tf_trapno == T_BRKPT) {
     // handle breakpoint exercise 6
+    monitor(tf);
   }
 
   if (tf->tf_trapno == T_SYSCALL) {
