@@ -281,7 +281,6 @@ region_alloc(struct Env *e, void *va, size_t len)
   for(uint32_t i = ROUNDDOWN((uint32_t) va, PGSIZE); 
         i < ROUNDUP((uint32_t)va+len, PGSIZE); 
         i+=PGSIZE) {
-    cprintf("a");
 	  struct PageInfo *pp = page_alloc(0);
     if (!pp) panic("Out of Memory");
     if(page_insert(e->env_pgdir, pp, (void*) i, PTE_P | PTE_U | PTE_W) == -1*E_NO_MEM)

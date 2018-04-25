@@ -1,0 +1,5 @@
+Question 1: Error code (only for certain exceptions)
+Question 2: No. It doesn't have permission to fault that way, so there's a
+protection fault. If there wasn't, this would be a vulnerability.
+
+Names: Robin Schmit, Sarp Orgul

@@ -58,6 +58,24 @@ static const char *trapname(int trapno)
 	return "(unknown trap)";
 }
 
+void divide();
+void debug();
+void nmi();
+void brkpt();
+void oflow();
+void bound();
+void illop();
+void device();
+void dblflt();
+void tss();
+void segnp();
+void stack();
+void gpflt();
+void pgflt();
+void fperr();
+void align();
+void mchk();
+void simderr();
 
 void
 trap_init(void)
@@ -65,6 +83,24 @@ trap_init(void)
 	extern struct Segdesc gdt[];
 
 	// LAB 3: Your code here.
+  SETGATE(idt[T_DIVIDE], 1, GD_KT, &divide, 0);
+  SETGATE(idt[T_DEBUG], 1, GD_KT, &debug, 0);
+  SETGATE(idt[T_NMI], 1, GD_KT, &nmi, 0);
+  SETGATE(idt[T_BRKPT], 1, GD_KT, &brkpt, 0);
+  SETGATE(idt[T_OFLOW], 1, GD_KT, &oflow, 0);
+  SETGATE(idt[T_BOUND], 1, GD_KT, &bound, 0);
+  SETGATE(idt[T_ILLOP], 1, GD_KT, &illop, 0);
+  SETGATE(idt[T_DEVICE], 1, GD_KT, &device, 0);
+  SETGATE(idt[T_DBLFLT], 1, GD_KT, &dblflt, 0);
+  SETGATE(idt[T_TSS], 1, GD_KT, &tss, 0);
+  SETGATE(idt[T_SEGNP], 1, GD_KT, &segnp, 0);
+  SETGATE(idt[T_STACK], 1, GD_KT, &stack, 0);
+  SETGATE(idt[T_GPFLT], 1, GD_KT, &gpflt, 0);
+  SETGATE(idt[T_PGFLT], 1, GD_KT, &pgflt, 0);
+  SETGATE(idt[T_FPERR], 1, GD_KT, &fperr, 0);
+  SETGATE(idt[T_ALIGN], 1, GD_KT, &align, 0);
+  SETGATE(idt[T_MCHK], 1, GD_KT, &mchk, 0);
+  SETGATE(idt[T_SIMDERR], 1, GD_KT, &simderr, 0);
 
 	// Per-CPU setup 
 	trap_init_percpu();
