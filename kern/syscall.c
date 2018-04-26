@@ -140,19 +140,32 @@ sys_page_unmap(envid_t envid, void *va)
 }
 
 // Dispatches to the correct kernel function, passing the arguments.
-int32_t
+  int32_t
 syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, uint32_t a5)
 {
-	// Call the function corresponding to the 'syscallno' parameter.
-	// Return any appropriate return value.
-	// LAB 3: Your code here.
-
-	panic("syscall not implemented");
-
-	switch (syscallno) {
-  // add cases for each syscall enum (as in the header file)
-	default:
-		return -E_INVAL;
-	}
+  // Call the function corresponding to the 'syscallno' parameter.
+  // Return any appropriate return value.
+  // LAB 3: Your code here.
+  switch (syscallno) {
+    // add cases for each syscall enum (as in the header file)
+    case SYS_cputs: sys_cputs((const char *) a1, (size_t) a2);
+                    return 0;
+                    break;
+    case SYS_cgetc: return sys_cgetc();
+                    break;
+    case SYS_getenvid: return sys_getenvid();
+                       break;
+    case SYS_env_destroy: return sys_env_destroy((envid_t) a1);
+                          break;
+    case SYS_page_alloc: return sys_page_alloc((envid_t) a1, (void *) a2, (int) a3);
+                         break;
+    case SYS_page_map: return sys_page_map((envid_t) a1, (void *) a2, (envid_t) a3,
+                           (void *) a4, (int) a5);
+                       break;
+    case SYS_page_unmap: return sys_page_unmap((envid_t) a1, (void *) a2);
+                         break;
+    default:
+                return -E_INVAL;
+  }
 }
 

@@ -62,6 +62,8 @@ TRAPHANDLER_NOEC(fperr, T_FPERR)
 TRAPHANDLER_NOEC(align, T_ALIGN)
 TRAPHANDLER_NOEC(mchk, T_MCHK)
 TRAPHANDLER_NOEC(simderr, T_SIMDERR)
+TRAPHANDLER_NOEC(syscallh, T_SYSCALL)
+TRAPHANDLER_NOEC(default, T_DEFAULT)
 
 //some more of these
 
@@ -72,12 +74,12 @@ TRAPHANDLER_NOEC(simderr, T_SIMDERR)
 _alltraps:
   pushl %ds
   pushl %es
-  pushal 
+  pushal
 
   mov $(GD_KD), %eax
   mov %eax, %ds
   mov %eax, %es
 
   pushl %esp
-  
+
   call trap

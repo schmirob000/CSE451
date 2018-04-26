@@ -76,6 +76,7 @@ void fperr();
 void align();
 void mchk();
 void simderr();
+void syscallh();
 
 void
 trap_init(void)
@@ -101,6 +102,8 @@ trap_init(void)
   SETGATE(idt[T_ALIGN], 1, GD_KT, &align, 0);
   SETGATE(idt[T_MCHK], 1, GD_KT, &mchk, 0);
   SETGATE(idt[T_SIMDERR], 1, GD_KT, &simderr, 0);
+  SETGATE(idt[T_SYSCALL], 1, GD_KT, &syscall, 3);
+  SETGATE(idt[T_DEFAULT], 1, GD_KT, &simderr, 3);
 
 	// Per-CPU setup
 	trap_init_percpu();
@@ -189,7 +192,15 @@ trap_dispatch(struct Trapframe *tf)
 
   if (tf->tf_trapno == T_SYSCALL) {
     // handle syscall exercise 7
-    // syscall();
+    // push different vlues to the stack specific to syscalls
+    // each int passed in represents a value or pointer to a value
+    uint32_t syscall_num = tf->tf_regs.reg_eax;
+    uint32_t arg1 = tf->tf_regs.reg_edx;
+    uint32_t arg2 = tf->tf_regs.reg_ecx;
+    uint32_t arg3 = tf->tf_regs.reg_ebx;
+    uint32_t arg4 = tf->tf_regs.reg_edi;
+    uint32_t arg5 = tf->tf_regs.reg_esi;
+    syscall(syscall_num, arg1, arg2, arg3, arg4, arg5);
   }
 
 	// Unexpected trap: The user process or the kernel has a bug.
