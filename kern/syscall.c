@@ -89,7 +89,24 @@ sys_page_alloc(envid_t envid, void *va, int perm)
 	//   allocated!
 
 	// LAB 3: Your code here.
-	panic("sys_page_alloc not implemented");
+  if ((uint32_t) va >= UTOP || ((uint32_t) va % PGSIZE) != 0) return -E_INVAL;
+  // check if perm is inappropriate TODO
+
+  // find proper env
+  struct Env *e;
+  int ret = envid2env(envid, &e, perm);
+  if (!ret) return ret;
+
+  struct PageInfo *newp = page_alloc(ALLOC_ZERO);
+  if (!newp) return -E_NO_MEM;
+
+  ret = page_insert(e->env_pgdir, newp, va, perm);
+  if (!ret) {
+    page_free(newp);
+    return ret;
+  }
+
+  return 0;
 }
 
 // Map the page of memory at 'srcva' in srcenvid's address space
@@ -120,7 +137,31 @@ sys_page_map(envid_t srcenvid, void *srcva,
 	//   check the current permissions on the page.
 
 	// LAB 3: Your code here.
-	panic("sys_page_map not implemented");
+  if ((uint32_t) srcva >= UTOP || ((uint32_t) srcva % PGSIZE) != 0) return -E_INVAL;
+  if ((uint32_t) dstva >= UTOP || ((uint32_t) dstva % PGSIZE) != 0) return -E_INVAL;
+  // check if perm is inappropriate TODO
+
+  // find proper env for source
+  struct Env *esrc;
+  int ret = envid2env(srcenvid, &esrc, perm);
+  if (!ret) return ret;
+
+  // find proper env for dest
+  struct Env *edest;
+  ret = envid2env(dstenvid, &edest, perm);
+  if (!ret) return ret;
+
+  pte_t *pstor;
+  struct PageInfo *srcpp = page_lookup(esrc->env_pgdir, srcva, &pstor);
+  if (!srcpp) return -E_INVAL;
+  // TODO check if srcva is read only in srcvids address space
+
+  ret = page_insert(edest->env_pgdir, srcpp, dstva, perm);
+  if (!ret) return ret;
+
+  return 0;
+
+
 }
 
 // Unmap the page of memory at 'va' in the address space of 'envid'.
@@ -136,7 +177,17 @@ sys_page_unmap(envid_t envid, void *va)
 	// Hint: This function is a wrapper around page_remove().
 
 	// LAB 3: Your code here.
-	panic("sys_page_unmap not implemented");
+  if ((uint32_t) va >= UTOP || ((uint32_t) va % PGSIZE) != 0) return -E_INVAL;
+  // check if perm is inappropriate TODO
+
+  // find proper env
+  struct Env *e;
+  int ret = envid2env(envid, &e, PTE_U); // TODO is this correct perm arg?
+  if (!ret) return ret;
+
+  page_remove(e->env_pgdir, va);
+
+  return 0;
 }
 
 // Dispatches to the correct kernel function, passing the arguments.
@@ -148,7 +199,7 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
   // LAB 3: Your code here.
   switch (syscallno) {
     // add cases for each syscall enum (as in the header file)
-    case SYS_cputs: user_mem_assert(curenv, (void*) a1, (size_t) a2, PTE_U); 
+    case SYS_cputs: user_mem_assert(curenv, (void*) a1, (size_t) a2, PTE_U);
                     sys_cputs((const char *) a1, (size_t) a2);
                     return 0;
                     break;
