@@ -148,7 +148,8 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
   // LAB 3: Your code here.
   switch (syscallno) {
     // add cases for each syscall enum (as in the header file)
-    case SYS_cputs: sys_cputs((const char *) a1, (size_t) a2);
+    case SYS_cputs: user_mem_assert(curenv, (void*) a1, (size_t) a2, PTE_U); 
+                    sys_cputs((const char *) a1, (size_t) a2);
                     return 0;
                     break;
     case SYS_cgetc: return sys_cgetc();

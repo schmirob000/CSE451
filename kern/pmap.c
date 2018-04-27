@@ -554,8 +554,21 @@ static uintptr_t user_mem_check_addr;
 int
 user_mem_check(struct Env *env, const void *va, size_t len, int perm)
 {
-	// LAB 3: Your code here.
-
+  // LAB 3: Your code here
+	uint32_t pg_start = ROUNDDOWN((uint32_t) va, PGSIZE);
+  uint32_t pg_end = ROUNDUP((uint32_t) va+len, PGSIZE);
+  for (int i = pg_start; i < pg_end; i+= PGSIZE) {
+    if (i >= ULIM) {
+      user_mem_check_addr = (i == pg_start) ? (uint32_t) va : (uint32_t) i;
+      return -E_FAULT;
+    }
+    pte_t *pte_store;
+    struct PageInfo* pp = page_lookup(env->env_pgdir, (void*) i, &pte_store);
+    if (!pp || ((*pte_store & (perm)) ^ (perm))) {
+      user_mem_check_addr = (i == pg_start) ? (uint32_t) va : (uint32_t) i;
+      return -E_FAULT;
+    }
+  }
 	return 0;
 }
 
