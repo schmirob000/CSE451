@@ -200,7 +200,9 @@ trap_dispatch(struct Trapframe *tf)
     uint32_t arg3 = tf->tf_regs.reg_ebx;
     uint32_t arg4 = tf->tf_regs.reg_edi;
     uint32_t arg5 = tf->tf_regs.reg_esi;
-    syscall(syscall_num, arg1, arg2, arg3, arg4, arg5);
+    uint32_t ret = syscall(syscall_num, arg1, arg2, arg3, arg4, arg5);
+    tf->tf_regs.reg_eax = ret;
+    
     return;
   }
 
@@ -264,7 +266,9 @@ page_fault_handler(struct Trapframe *tf)
 	// Handle kernel-mode page faults.
 
 	// LAB 3: Your code here.
-  // if (tf->tf_cs & GD_KT) panic("page fault in kernel mode"); TODO
+  if (tf->tf_cs == GD_KT) 
+    panic("page fault in kernel mode");
+
 	// We've already handled kernel-mode exceptions, so if we get here,
 	// the page fault happened in user mode.
 
