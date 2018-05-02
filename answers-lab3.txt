@@ -1,5 +1,18 @@
 Question 1: Error code (only for certain exceptions)
 Question 2: No. It doesn't have permission to fault that way, so there's a
 protection fault. If there wasn't, this would be a vulnerability.
+Question 3: If we set it up so that the user has permission to make a 
+breakpoint system call, it will generate a break point exception.
+If we don't, this will trigger a general protection fault, since user doesn't
+have the correct permissions.
+Question 4: These mechanisms prevent programs from accessing information they
+shouldn't be able to access. If we page fault in softint instead we reveal
+information to the user we don't want them to know.
+Question 5: Backtrace is trying to look up locations using the kernel's page
+table, but since libmain is in userspace, it can't find the correct mappings.
+Question 6: It outputs the Fibonacci sequence up to 55.
+Question 7: Yes. After running the Go program, JOS printed out that it destroyed
+the environment, leading us to believe that the memory is reclaimed. Env Free iscalled which flushes all mapped pages in the userspace.
 
 Names: Robin Schmit, Sarp Orgul
+Time Spent: 20 hours
