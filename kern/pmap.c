@@ -327,7 +327,8 @@ page_init(void)
                 ((uint32_t) boot_addr > (uint32_t) page_addr)) ||
                 (EXTPHYSMEM <= (uint32_t) page_addr + PGSIZE &&
                 ((uint32_t) boot_addr > (uint32_t) page_addr + PGSIZE));
-    if (i != 0 && avail && !hol && !ext) {
+    bool ismpentry = page_addr == MPENTRY_PADDR; // LAB 4 addition
+    if (i != 0 && avail && !hol && !ext && !ismpentry) {
 		  pages[i].pp_ref = 0;
 		  pages[i].pp_link = page_free_list;
 		  page_free_list = &pages[i];
@@ -597,7 +598,12 @@ mmio_map_region(physaddr_t pa, size_t size)
 	// Hint: The staff solution uses boot_map_region.
 	//
 	// Your code here:
-	panic("mmio_map_region not implemented");
+  size_t round_size = ROUNDUP(size, PGSIZE);
+  if (base + round_size > MMIOLIM) panic("MMIO size too large");
+  boot_map_region(kern_pgdir, base, round_size/PGSIZE, pa, PTE_P | PTE_PCD | PTE_PWT | PTE_W);
+  uintptr_t old_base = base;
+  base += round_size;
+  return (void*) old_base;
 }
 
 static uintptr_t user_mem_check_addr;
