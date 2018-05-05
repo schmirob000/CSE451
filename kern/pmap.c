@@ -263,6 +263,12 @@ mem_init_mp(void)
 	//
 	// LAB 4: Your code here:
 
+  for (uint32_t i = 0; i < NCPU; i++) {
+    // cpus[i] is a CpuInfo struct containing cpu_env etc
+    // then use bootmap region to write to the page table
+    // pull out page table from cpu_env map pages as
+    // described above
+  }
 }
 
 // --------------------------------------------------------------
