@@ -140,6 +140,13 @@ trap_init_percpu(void)
 	// user space on that CPU.
 	//
 	// LAB 4: Your code here:
+  for (uint32_t i = 1; i < NCPU; i++) {
+    // need to init ts for every cpu do as below except using
+    // cpus[i].cpu_ts as the task state
+    // gdt[(GD_TSS0 >> 3) + i] store the gdt for cpu i
+    // be careful with use of lidt and ltr since each spu has
+    // its own registers
+  }
 
 	// Setup a TSS so that we get the right stack
 	// when we trap to the kernel.
