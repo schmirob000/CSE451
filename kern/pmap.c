@@ -22,7 +22,7 @@ static struct PageInfo *page_free_list;	// Free list of physical pages
 
 
 // --------------------------------------------------------------
-// Detect machine's physical memory setup.
+// Detect machine's physical memory setup._
 // --------------------------------------------------------------
 
 static void
@@ -268,11 +268,9 @@ mem_init_mp(void)
     // then use bootmap region to write to the page table
     // pull out page table from cpu_env map pages as
     // described above
-    struct Env *cpu_env = cpus[i].cpu_env;
-    pde_t *cpu_env_pgdir = cpu_env->env_pgdir;
-    uintptr_t kstacktop_i = KSTACKTOP - i*(KSTKSIZE+KSTKGAP);
+    uint32_t base = KSTACKTOP - (KSTKSIZE + KSTKGAP) * (i + 1);
     size_t np = ROUNDUP(KSTKSIZE, PGSIZE);
-    boot_map_region(cpu_env_pgdir, kstacktop_i-KSTKSIZE, np/PGSIZE, PADDR(percpu_kstacks[i]), PTE_P | PTE_W);
+    boot_map_region(kern_pgdir, base + KSTKGAP, np/PGSIZE, PADDR(percpu_kstacks[i]), PTE_P | PTE_W);
   }
 }
 
