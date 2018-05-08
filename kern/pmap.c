@@ -268,6 +268,11 @@ mem_init_mp(void)
     // then use bootmap region to write to the page table
     // pull out page table from cpu_env map pages as
     // described above
+    struct Env *cpu_env = cpus[i].cpu_env;
+    pde_t *cpu_env_pgdir = cpu_env->env_pgdir;
+    uintptr_t kstacktop_i = KSTACKTOP - i*(KSTKSIZE+KSTKGAP);
+    size_t np = ROUNDUP(KSTKSIZE, PGSIZE);
+    boot_map_region(cpu_env_pgdir, kstacktop_i-KSTKSIZE, np/PGSIZE, PADDR(percpu_kstacks[i]), PTE_P | PTE_W);
   }
 }
 
@@ -843,9 +848,10 @@ check_kern_pgdir(void)
 	// (updated in lab 4 to check per-CPU kernel stacks)
 	for (n = 0; n < NCPU; n++) {
 		uint32_t base = KSTACKTOP - (KSTKSIZE + KSTKGAP) * (n + 1);
-		for (i = 0; i < KSTKSIZE; i += PGSIZE)
+		for (i = 0; i < KSTKSIZE; i += PGSIZE) {
 			assert(check_va2pa(pgdir, base + KSTKGAP + i)
 				== PADDR(percpu_kstacks[n]) + i);
+    }
 		for (i = 0; i < KSTKGAP; i += PGSIZE)
 			assert(check_va2pa(pgdir, base + i) == ~0);
 	}
