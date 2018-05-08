@@ -140,30 +140,23 @@ trap_init_percpu(void)
 	// user space on that CPU.
 	//
 	// LAB 4: Your code here:
-  for (uint32_t i = 1; i < NCPU; i++) {
-    // need to init ts for every cpu do as below except using
-    // cpus[i].cpu_ts as the task state
-    // gdt[(GD_TSS0 >> 3) + i] store the gdt for cpu i
-    // be careful with use of lidt and ltr since each spu has
-    // its own registers
-  }
 
-	// Setup a TSS so that we get the right stack
-	// when we trap to the kernel.
-	ts.ts_esp0 = KSTACKTOP;
-	ts.ts_ss0 = GD_KD;
+  uint32_t i = cpunum();
+  uint32_t kstacktop_i = KSTACKTOP - (KSTKSIZE + KSTKGAP) * i;
+  thiscpu->cpu_ts.ts_esp0 = kstacktop_i;
+  thiscpu->cpu_ts.ts_ss0 = GD_KD;
 
-	// Initialize the TSS slot of the gdt.
-	gdt[GD_TSS0 >> 3] = SEG16(STS_T32A, (uint32_t) (&ts),
-					sizeof(struct Taskstate) - 1, 0);
-	gdt[GD_TSS0 >> 3].sd_s = 0;
+  // Initialize the TSS slot of the gdt.
+  gdt[(GD_TSS0 >> 3) + i] = SEG16(STS_T32A, (uint32_t) (&thiscpu->cpu_ts),
+      sizeof(struct Taskstate) - 1, 0);
+  gdt[(GD_TSS0 >> 3) + i].sd_s = 0;
 
-	// Load the TSS selector (like other segment selectors, the
-	// bottom three bits are special; we leave them 0)
-	ltr(GD_TSS0);
+  // Load the TSS selector (like other segment selectors, the
+  // bottom three bits are special; we leave them 0)
+  ltr(GD_TSS0);
 
-	// Load the IDT
-	lidt(&idt_pd);
+  // Load the IDT
+  lidt(&idt_pd);
 }
 
 void
