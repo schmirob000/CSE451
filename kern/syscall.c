@@ -213,7 +213,17 @@ sys_exofork(void)
 	// will appear to return 0.
 
 	// LAB 4: Your code here.
-	panic("sys_exofork not implemented");
+	struct Env *e;
+  int ret = env_alloc(&e, curenv->env_id);
+  if (ret < 0)
+    return ret;
+
+
+  e->env_status = ENV_NOT_RUNNABLE;
+  e->env_tf = curenv->env_tf;
+  e->env_tf.tf_regs.reg_eax = 0;
+
+  return e->env_id;
 }
 
 // Set envid's env_status to status, which must be ENV_RUNNABLE
@@ -233,7 +243,20 @@ sys_env_set_status(envid_t envid, int status)
 	// envid's status.
 
 	// LAB 4: Your code here.
-	panic("sys_env_set_status not implemented");
+  //
+
+  if (status != ENV_RUNNABLE && status != ENV_NOT_RUNNABLE) {
+    return -E_INVAL;
+  }
+
+  struct Env *e;
+  int ret = envid2env(envid, &e, 1);
+  if (ret < 0)
+    return ret;
+
+  e->env_status = status;
+
+  return 0;
 }
 
 // Set the page fault upcall for 'envid' by modifying the corresponding struct
@@ -332,25 +355,42 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
   // LAB 3: Your code here.
   switch (syscallno) {
     // add cases for each syscall enum (as in the header file)
-    case SYS_cputs: user_mem_assert(curenv, (void*) a1, (size_t) a2, PTE_U);
-                    sys_cputs((const char *) a1, (size_t) a2);
-                    return 0;
-                    break;
-    case SYS_cgetc: return sys_cgetc();
-                    break;
-    case SYS_getenvid: return sys_getenvid();
-                       break;
-    case SYS_env_destroy: return sys_env_destroy((envid_t) a1);
-                          break;
-    case SYS_page_alloc: return sys_page_alloc((envid_t) a1, (void *) a2, (int) a3);
-                         break;
-    case SYS_page_map: return sys_page_map((envid_t) a1, (void *) a2, (envid_t) a3,
-                           (void *) a4, (int) a5);
-                       break;
-    case SYS_page_unmap: return sys_page_unmap((envid_t) a1, (void *) a2);
-                         break;
+    case SYS_cputs:
+      user_mem_assert(curenv, (void*) a1, (size_t) a2, PTE_U);
+      sys_cputs((const char *) a1, (size_t) a2);
+      return 0;
+      break;
+    case SYS_cgetc:
+      return sys_cgetc();
+      break;
+    case SYS_getenvid:
+      return sys_getenvid();
+      break;
+    case SYS_env_destroy:
+      return sys_env_destroy((envid_t) a1);
+      break;
+    case SYS_page_alloc:
+      return sys_page_alloc((envid_t) a1, (void *) a2, (int) a3);
+      break;
+    case SYS_page_map:
+      return sys_page_map((envid_t) a1, (void *) a2, (envid_t) a3,
+          (void *) a4, (int) a5);
+      break;
+    case SYS_page_unmap:
+      return sys_page_unmap((envid_t) a1, (void *) a2);
+      break;
+    case SYS_yield:
+      sched_yield();
+      return 0;
+      break;
+    case SYS_exofork:
+      return sys_exofork();
+      break;
+    case SYS_env_set_status:
+      return sys_env_set_status((envid_t) a1, (int) a2);
+      break;
     default:
-                return -E_INVAL;
+      return -E_INVAL;
   }
 }
 

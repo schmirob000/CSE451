@@ -77,8 +77,12 @@ i386_init(uint32_t magic, uint32_t addr)
 	ENV_CREATE(TEST, ENV_TYPE_USER);
 #else
 	// Touch all you want.
-	ENV_CREATE(user_primes, ENV_TYPE_USER);
+	// ENV_CREATE(user_primes, ENV_TYPE_USER);
+	ENV_CREATE(user_yield, ENV_TYPE_USER);
+	ENV_CREATE(user_yield, ENV_TYPE_USER);
+	ENV_CREATE(user_yield, ENV_TYPE_USER);
 #endif // TEST*
+
 
 	// Schedule and run the first user environment!
 	sched_yield();
@@ -107,7 +111,7 @@ boot_aps(void)
 
 	// Boot each AP one at a time
 	for (c = cpus + 1; c < cpus + ncpu; c++) {
-		// Tell mpentry.S what stack to use 
+		// Tell mpentry.S what stack to use
 		mpentry_kstack = percpu_kstacks[c - cpus] + KSTKSIZE;
 		// Start the CPU at mpentry_start
 		lapic_startap(c->cpu_apicid, PADDR(code));
@@ -121,7 +125,7 @@ boot_aps(void)
 void
 mp_main(void)
 {
-	// We are in high EIP now, safe to switch to kern_pgdir 
+	// We are in high EIP now, safe to switch to kern_pgdir
 	lcr3(PADDR(kern_pgdir));
 	cprintf("  AP #%d [apicid %02x] starting\n", cpunum(), thiscpu->cpu_apicid);
 
