@@ -11,6 +11,7 @@
 #include <kern/monitor.h>
 #include <kern/kdebug.h>
 #include <kern/trap.h>
+#include <kern/pmap.h>
 
 #define CMDBUF_SIZE	80	// enough for one VGA text line
 
@@ -26,6 +27,9 @@ static struct Command commands[] = {
 	{ "help", "Display this list of commands", mon_help },
 	{ "kerninfo", "Display information about the kernel", mon_kerninfo },
 	{ "backtrace", "Display backtrace of the kernel", mon_backtrace },
+	{ "showmappings", "Shows mappings for given page range", mon_showmappings },
+	{ "modperms", "Modify permissions of mappings", mon_modperms },
+	{ "dumpmem", "Dump contents of range of memory", mon_dumpmem },
 };
 
 /***** Implementations of basic kernel monitor commands *****/
@@ -38,6 +42,41 @@ mon_help(int argc, char **argv, struct Trapframe *tf)
 	for (i = 0; i < ARRAY_SIZE(commands); i++)
 		cprintf("%s - %s\n", commands[i].name, commands[i].desc);
 	return 0;
+}
+
+int
+mon_dumpmem(int argc, char **argv, struct Trapframe *tf)
+{
+	return 0;
+}
+
+int
+mon_modperms(int argc, char **argv, struct Trapframe *tf)
+{
+	return 0;
+}
+
+int
+mon_showmappings(int argc, char **argv, struct Trapframe *tf)
+{
+  if (argc < 3) {
+    cprintf("Usage: show mappings requires two args representing mem range");
+    return -1;
+  }
+
+  int begin = atoi(argv[1]);
+  int end = atoi(argv[2]);
+
+  uint32_t pgstart = ROUNDDOWN(begin, PGSIZE);
+  uint32_t pgend = ROUNDUP(end, PGSIZE);
+
+  cprintf("startpage: 0x%x\n", pgstart);
+  cprintf("endpage  : 0x%x\n", pgend);
+
+  for (uint32_t i = pgstart; i < pgend; i += PGSIZE) {
+    cprintf("va 0x%x, pa 0x%x", i, PADDR((void *) i));
+  }
+  return 0;
 }
 
 int

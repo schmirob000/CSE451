@@ -23,6 +23,7 @@ sys_cputs(const char *s, size_t len)
 	// Destroy the environment if not.
 
 	// LAB 3: Your code here.
+  user_mem_assert(curenv, (void*) s, len, PTE_U);
 
 	// Print the string supplied by the user.
 	cprintf("%.*s", len, s);
@@ -93,17 +94,22 @@ sys_page_alloc(envid_t envid, void *va, int perm)
 	// LAB 3: Your code here.
   if ((uint32_t) va >= UTOP || ((uint32_t) va % PGSIZE) != 0) return -E_INVAL;
   // check if perm is inappropriate TODO
+  if (!(((perm & PTE_U) | (perm & PTE_P)) && ((perm | PTE_SYSCALL) == PTE_SYSCALL))) return -E_INVAL;
 
   // find proper env
   struct Env *e;
-  int ret = envid2env(envid, &e, perm);
-  if (!ret) return ret;
+
+  int ret = envid2env(envid, &e, 1);
+
+  if (ret < 0) {
+    return ret; //ret = 0 if envid successful, otherwise = -E_BAD_ENV
+  }
 
   struct PageInfo *newp = page_alloc(ALLOC_ZERO);
   if (!newp) return -E_NO_MEM;
 
   ret = page_insert(e->env_pgdir, newp, va, perm);
-  if (!ret) {
+  if (ret) {//Ret = 0 if page_insert was successful, otherwise -E_NO_MEM
     page_free(newp);
     return ret;
   }
@@ -142,16 +148,21 @@ sys_page_map(envid_t srcenvid, void *srcva,
   if ((uint32_t) srcva >= UTOP || ((uint32_t) srcva % PGSIZE) != 0) return -E_INVAL;
   if ((uint32_t) dstva >= UTOP || ((uint32_t) dstva % PGSIZE) != 0) return -E_INVAL;
   // check if perm is inappropriate TODO
+  if (!(((perm & PTE_U) | (perm & PTE_P)) && ((perm | PTE_SYSCALL) == PTE_SYSCALL))) return -1*E_INVAL;
 
   // find proper env for source
   struct Env *esrc;
-  int ret = envid2env(srcenvid, &esrc, perm);
-  if (!ret) return ret;
+
+  int ret = envid2env(srcenvid, &esrc, 1);
+  if (ret > 0) panic("srcret bad");
+  if (ret) return ret; //-E_BAD_ENV
 
   // find proper env for dest
   struct Env *edest;
-  ret = envid2env(dstenvid, &edest, perm);
-  if (!ret) return ret;
+
+  ret = envid2env(dstenvid, &edest, 1);
+  if (ret > 0) panic("destret bad");
+  if (ret) return ret; //-E_BAD_ENV
 
   pte_t *pstor;
   struct PageInfo *srcpp = page_lookup(esrc->env_pgdir, srcva, &pstor);
@@ -159,7 +170,7 @@ sys_page_map(envid_t srcenvid, void *srcva,
   // TODO check if srcva is read only in srcvids address space
 
   ret = page_insert(edest->env_pgdir, srcpp, dstva, perm);
-  if (!ret) return ret;
+  if (ret) return ret;
 
   return 0;
 
@@ -184,8 +195,9 @@ sys_page_unmap(envid_t envid, void *va)
 
   // find proper env
   struct Env *e;
-  int ret = envid2env(envid, &e, PTE_U); // TODO is this correct perm arg?
-  if (!ret) return ret;
+
+  int ret = envid2env(envid, &e, 1);
+  if (ret) return ret; //-E_BAD_ENV
 
   page_remove(e->env_pgdir, va);
 
@@ -271,7 +283,13 @@ static int
 sys_env_set_pgfault_upcall(envid_t envid, void *func)
 {
 	// LAB 4: Your code here.
-	panic("sys_env_set_pgfault_upcall not implemented");
+  struct Env *e;
+  int ret = envid2env(envid, &e, 1);
+  if (ret < 0)
+    return ret;
+
+  e->env_pgfault_upcall = func;
+  return 0;
 }
 
 // Return the current system information.
@@ -356,7 +374,6 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
   switch (syscallno) {
     // add cases for each syscall enum (as in the header file)
     case SYS_cputs:
-      user_mem_assert(curenv, (void*) a1, (size_t) a2, PTE_U);
       sys_cputs((const char *) a1, (size_t) a2);
       return 0;
       break;
@@ -388,6 +405,9 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
       break;
     case SYS_env_set_status:
       return sys_env_set_status((envid_t) a1, (int) a2);
+      break;
+    case SYS_env_set_pgfault_upcall:
+      return sys_env_set_pgfault_upcall((envid_t) a1, (void *) a2);
       break;
     default:
       return -E_INVAL;
