@@ -25,9 +25,11 @@ pgfault(struct UTrapframe *utf)
 	//   (see <inc/memlayout.h>).
 
 	// LAB 4: Your code here.
-	if (!(err & FEC_WR)) 
-    panic("non-write page fault in user code");
-  if (!((uint32_t) PGOFF(uvpd[(uint32_t) addr]) & PTE_COW))
+	if (!(err & FEC_WR)) {
+    panic("non-write page fault in user code, Error: 0x%x, Addr: 0x%x", err, addr);
+  }
+
+  if (!((uint32_t) PGOFF(uvpt[(uint32_t) addr/PGSIZE]) & PTE_COW))
     panic("write page fault in user not COW");
 
 	// Allocate a new page, map it at a temporary location (PFTEMP),
@@ -37,10 +39,10 @@ pgfault(struct UTrapframe *utf)
 	//   You should make three system calls.
 
 	// LAB 4: Your code here.
-  
-  envid_t envid = sys_getenvid();	
+
+  envid_t envid = sys_getenvid();
   sys_page_alloc(envid, PFTEMP, PTE_P | PTE_U | PTE_W | PTE_COW);
-  memmove(addr, PFTEMP, PGSIZE); 
+  memmove(addr, PFTEMP, PGSIZE);
   sys_page_map(envid, PFTEMP, envid, addr, PTE_P | PTE_U | PTE_W | PTE_COW);
   sys_page_unmap(envid, PFTEMP);
 }
@@ -60,7 +62,7 @@ static int
 duppage(envid_t envid, unsigned pn)
 {
 	int r;
-
+  int x = PGOFF(uvpt[pn]);
 	// LAB 4: Your code here.
 	int err;
 	err = sys_page_map(sys_getenvid(), (void*) (pn*PGSIZE), envid, (void*) (pn*PGSIZE), PTE_P | PTE_U | PTE_COW); //remap in us
@@ -91,30 +93,34 @@ fork(void)
 {
 	// LAB 4: Your code here.
 	envid_t envid;
-	
-  set_pgfault_handler(&pgfault);
+
   envid = sys_exofork();
   if (envid < 0)
     panic("sys_exofork: %e", envid);
   if (envid == 0) {
-    envid = sys_getenvid();
-    thisenv = &envs[ENVX(envid)];
-
-    sys_page_alloc(envid, (void*) (UXSTACKTOP-PGSIZE), PTE_P | PTE_U | PTE_W);
+		thisenv = &envs[ENVX(sys_getenvid())];
     set_pgfault_handler(&pgfault);
     return 0;
   }
 
+  set_pgfault_handler(&pgfault);
+
   uint32_t addr;
-  for (addr = (uint32_t) UTEXT; addr < (uint32_t) USTACKTOP; addr += PGSIZE) {
-    if (PGOFF(uvpd[addr]) & (PTE_P | PTE_U | PTE_W))
-      duppage(envid, addr/PGSIZE);
+  for (addr = (uint32_t) 0; addr < (uint32_t) USTACKTOP; addr += PGSIZE) {
+    if (uvpd[PDX(addr)] & PTE_P) {
+      int perms = uvpt[addr/PGSIZE];
+      if ((perms & PTE_P) && (perms & PTE_U) && (perms & PTE_W)) {
+        duppage(envid, addr/PGSIZE);
+      }
+    }
   }
-  
-  for (addr = (uint32_t) UXSTACKTOP; addr < (uint32_t) ULIM; addr += PGSIZE) 
+
+  sys_page_alloc(envid, (void*) (UXSTACKTOP-PGSIZE), PTE_P | PTE_U | PTE_W);
+
+  for (addr = (uint32_t) UXSTACKTOP; addr < (uint32_t) ULIM; addr += PGSIZE)
     sys_page_map(sys_getenvid(), (void*) addr, envid, (void*) addr, PTE_P | PTE_U);
-  
-  int r; 
+
+  int r;
   if ((r = sys_env_set_status(envid, ENV_RUNNABLE)) < 0)
     panic("sys_env_set_status: %e", r);
 
@@ -126,5 +132,5 @@ int
 sfork(void)
 {
 	panic("sfork not implemented");
-	return -E_INVAL;
+  return -E_INVAL;
 }

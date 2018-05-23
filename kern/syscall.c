@@ -148,7 +148,9 @@ sys_page_map(envid_t srcenvid, void *srcva,
   if ((uint32_t) srcva >= UTOP || ((uint32_t) srcva % PGSIZE) != 0) return -E_INVAL;
   if ((uint32_t) dstva >= UTOP || ((uint32_t) dstva % PGSIZE) != 0) return -E_INVAL;
   // check if perm is inappropriate TODO
-  if (!(((perm & PTE_U) | (perm & PTE_P)) && ((perm | PTE_SYSCALL) == PTE_SYSCALL))) return -1*E_INVAL;
+  if (!(((perm & PTE_U) | (perm & PTE_P)) && ((perm | PTE_SYSCALL) == PTE_SYSCALL))) {
+    return -1*E_INVAL;
+  }
 
   // find proper env for source
   struct Env *esrc;
@@ -166,11 +168,16 @@ sys_page_map(envid_t srcenvid, void *srcva,
 
   pte_t *pstor;
   struct PageInfo *srcpp = page_lookup(esrc->env_pgdir, srcva, &pstor);
-  if (!srcpp) return -E_INVAL;
+  if (!srcpp) {
+    cprintf("fuck you");
+    return -E_INVAL;
+  }
   // TODO check if srcva is read only in srcvids address space
 
   ret = page_insert(edest->env_pgdir, srcpp, dstva, perm);
-  if (ret) return ret;
+  if (ret) {
+    return ret;
+  }
 
   return 0;
 
