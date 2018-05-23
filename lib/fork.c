@@ -39,12 +39,17 @@ pgfault(struct UTrapframe *utf)
 	//   You should make three system calls.
 
 	// LAB 4: Your code here.
-
+  cprintf("1");
   envid_t envid = sys_getenvid();
+  cprintf("2");
   sys_page_alloc(envid, PFTEMP, PTE_P | PTE_U | PTE_W | PTE_COW);
+  cprintf("3");
   memmove(addr, PFTEMP, PGSIZE);
+  cprintf(".");
   sys_page_map(envid, PFTEMP, envid, addr, PTE_P | PTE_U | PTE_W | PTE_COW);
+  cprintf("4");
   sys_page_unmap(envid, PFTEMP);
+  cprintf("5\n");
 }
 
 //
@@ -63,7 +68,7 @@ duppage(envid_t envid, unsigned pn)
 {
 	// LAB 4: Your code here.
 	int err;
-	err = sys_page_map(sys_getenvid(), (void*) (pn*PGSIZE), envid, (void*) (pn*PGSIZE), PTE_P | PTE_U | PTE_COW); //remap in us
+	err = sys_page_map(sys_getenvid(), (void*) (pn*PGSIZE), envid, (void*) (pn*PGSIZE), PTE_P | PTE_U | PTE_COW); //map in child
   if (err < 0)
     panic("sys_page_map error while trying to duppage, %e", err);
 
@@ -104,8 +109,12 @@ fork(void)
   if (envid == 0) {
     cprintf("hello");
 		thisenv = &envs[ENVX(sys_getenvid())];
+    set_pgfault_handler(&pgfault);
     return 0;
   }
+  sys_env_set_pgfault_upcall(envid, thisenv->env_pgfault_upcall);
+  cprintf("env_pgfault_upcall: %p\n", thisenv->env_pgfault_upcall);
+  cprintf("pgfault(): %p\n", &pgfault);
 
   uint32_t addr;
   for (addr = (uint32_t) 0; addr < (uint32_t) USTACKTOP; addr += PGSIZE) {
@@ -127,8 +136,6 @@ fork(void)
   int r;
   if ((r = sys_env_set_status(envid, ENV_RUNNABLE)) < 0)
     panic("sys_env_set_status: %e", r);
-
-  sys_env_set_pgfault_upcall(envid, thisenv->env_pgfault_upcall);
 
   return envid;
 }

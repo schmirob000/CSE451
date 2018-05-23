@@ -29,10 +29,13 @@ set_pgfault_handler(void (*handler)(struct UTrapframe *utf))
 	if (_pgfault_handler == 0) {
 		// First time through!
 		// LAB 4: Your code here.
-    sys_page_alloc(thisenv->env_id, (void *) UXSTACKTOP-PGSIZE, PTE_U | PTE_P | PTE_W);
-    sys_env_set_pgfault_upcall(thisenv->env_id, &_pgfault_upcall);
+		envid_t envid = sys_getenvid();
+    sys_page_alloc(envid, (void *) UXSTACKTOP-PGSIZE, PTE_U | PTE_P | PTE_W);
+    sys_env_set_pgfault_upcall(envid, _pgfault_upcall);
+    cprintf("pgfault upcall: %p\n", _pgfault_upcall);
 	}
 
 	// Save handler pointer for assembly to call.
 	_pgfault_handler = handler;
+  cprintf("pgfault handler: %p\n", _pgfault_handler);
 }

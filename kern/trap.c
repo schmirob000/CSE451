@@ -381,7 +381,9 @@ page_fault_handler(struct Trapframe *tf)
   struct UTrapframe *utf;
   if (tf->tf_esp >= UXSTACKTOP-PGSIZE && tf->tf_esp <= UXSTACKTOP-1) {
     utf = (struct UTrapframe *) (tf->tf_esp - sizeof(struct UTrapframe) - sizeof(uintptr_t));
+    cprintf("before");
     user_mem_assert(curenv, (void *) utf, sizeof(struct UTrapframe) + sizeof(uintptr_t), PTE_P | PTE_U | PTE_W);
+    cprintf("after");
   } else {
     utf = (struct UTrapframe *) (UXSTACKTOP - sizeof(struct UTrapframe));
     user_mem_assert(curenv, (void *) utf, sizeof(struct UTrapframe), PTE_P | PTE_U | PTE_W);
