@@ -61,11 +61,13 @@ pgfault(struct UTrapframe *utf)
 static int
 duppage(envid_t envid, unsigned pn)
 {
-	int r;
-  int x = PGOFF(uvpt[pn]);
 	// LAB 4: Your code here.
 	int err;
 	err = sys_page_map(sys_getenvid(), (void*) (pn*PGSIZE), envid, (void*) (pn*PGSIZE), PTE_P | PTE_U | PTE_COW); //remap in us
+  if (err < 0)
+    panic("sys_page_map error while trying to duppage, %e", err);
+
+	err = sys_page_map(sys_getenvid(), (void*) (pn*PGSIZE), sys_getenvid(), (void*) (pn*PGSIZE), PTE_P | PTE_U | PTE_COW); //remap in us
   if (err < 0)
     panic("sys_page_map error while trying to duppage, %e", err);
 
@@ -94,16 +96,16 @@ fork(void)
 	// LAB 4: Your code here.
 	envid_t envid;
 
+  set_pgfault_handler(&pgfault);
   envid = sys_exofork();
+
   if (envid < 0)
     panic("sys_exofork: %e", envid);
   if (envid == 0) {
+    cprintf("hello");
 		thisenv = &envs[ENVX(sys_getenvid())];
-    set_pgfault_handler(&pgfault);
     return 0;
   }
-
-  set_pgfault_handler(&pgfault);
 
   uint32_t addr;
   for (addr = (uint32_t) 0; addr < (uint32_t) USTACKTOP; addr += PGSIZE) {
@@ -111,6 +113,8 @@ fork(void)
       int perms = uvpt[addr/PGSIZE];
       if ((perms & PTE_P) && (perms & PTE_U) && (perms & PTE_W)) {
         duppage(envid, addr/PGSIZE);
+      } else if ((perms & PTE_P) && (perms & PTE_U)) {
+        sys_page_map(sys_getenvid(), (void*) addr, envid, (void*) addr, PTE_P | PTE_U);
       }
     }
   }
@@ -123,6 +127,8 @@ fork(void)
   int r;
   if ((r = sys_env_set_status(envid, ENV_RUNNABLE)) < 0)
     panic("sys_env_set_status: %e", r);
+
+  sys_env_set_pgfault_upcall(envid, thisenv->env_pgfault_upcall);
 
   return envid;
 }

@@ -169,7 +169,6 @@ sys_page_map(envid_t srcenvid, void *srcva,
   pte_t *pstor;
   struct PageInfo *srcpp = page_lookup(esrc->env_pgdir, srcva, &pstor);
   if (!srcpp) {
-    cprintf("fuck you");
     return -E_INVAL;
   }
   // TODO check if srcva is read only in srcvids address space
