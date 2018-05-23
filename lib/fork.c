@@ -14,8 +14,11 @@
 static void
 pgfault(struct UTrapframe *utf)
 {
-	void *addr = (void *) utf->utf_fault_va;
+	if (!utf) cprintf("goddammit");
+  void *addr = (void *) utf->utf_fault_va;
+  //cprintf("%p\n", addr);
 	uint32_t err = utf->utf_err;
+  //cprintf("%d\n", err);
 	int r;
 
 	// Check that the faulting access was (1) a write, and (2) to a
@@ -39,17 +42,12 @@ pgfault(struct UTrapframe *utf)
 	//   You should make three system calls.
 
 	// LAB 4: Your code here.
-  cprintf("1");
   envid_t envid = sys_getenvid();
-  cprintf("2");
-  sys_page_alloc(envid, PFTEMP, PTE_P | PTE_U | PTE_W | PTE_COW);
-  cprintf("3");
-  memmove(addr, PFTEMP, PGSIZE);
-  cprintf(".");
-  sys_page_map(envid, PFTEMP, envid, addr, PTE_P | PTE_U | PTE_W | PTE_COW);
-  cprintf("4");
+  void *addr_aligned = (void*) ROUNDDOWN((uint32_t)addr, PGSIZE);
+  sys_page_alloc(envid, PFTEMP, PTE_P | PTE_U | PTE_W);
+  memmove(PFTEMP, addr_aligned, PGSIZE);
+  sys_page_map(envid, PFTEMP, envid, addr_aligned, PTE_P | PTE_U | PTE_W);
   sys_page_unmap(envid, PFTEMP);
-  cprintf("5\n");
 }
 
 //
@@ -107,14 +105,11 @@ fork(void)
   if (envid < 0)
     panic("sys_exofork: %e", envid);
   if (envid == 0) {
-    cprintf("hello");
 		thisenv = &envs[ENVX(sys_getenvid())];
     set_pgfault_handler(&pgfault);
     return 0;
   }
   sys_env_set_pgfault_upcall(envid, thisenv->env_pgfault_upcall);
-  cprintf("env_pgfault_upcall: %p\n", thisenv->env_pgfault_upcall);
-  cprintf("pgfault(): %p\n", &pgfault);
 
   uint32_t addr;
   for (addr = (uint32_t) 0; addr < (uint32_t) USTACKTOP; addr += PGSIZE) {

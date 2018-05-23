@@ -1,5 +1,0 @@
-UVPT = uvpt;
-
-recursive faulting bug:
-thisenv->env_pgfault_upcall (0x801121) = _pgfault_upcall (in lib/pfentry.S)
-which calls _pgfault_handler = 
