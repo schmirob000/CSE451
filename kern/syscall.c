@@ -349,7 +349,7 @@ sys_ipc_try_send(envid_t envid, uint32_t value, void *srcva, unsigned perm)
 {
 	// LAB 4: Your code here.
   struct Env *e;
-  int ret = envid2env(envid, &e, 1);
+  int ret = envid2env(envid, &e, 0);
   if (ret < 0)
     return ret;
 
