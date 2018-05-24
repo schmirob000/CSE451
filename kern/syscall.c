@@ -303,7 +303,7 @@ static int
 sys_sysinfo(struct sysinfo *info)
 {
 	// LAB 4: Your code here.
-	panic("sys_sysinfo not implemented");
+  return sysinfo(info);
 }
 
 // Try to send 'value' to the target env 'envid'.
@@ -348,7 +348,38 @@ static int
 sys_ipc_try_send(envid_t envid, uint32_t value, void *srcva, unsigned perm)
 {
 	// LAB 4: Your code here.
-	panic("sys_ipc_try_send not implemented");
+  struct Env *e;
+  int ret = envid2env(envid, &e, 1);
+  if (ret < 0)
+    return ret;
+
+  if (e->env_status == ENV_NOT_RUNNABLE || !e->env_ipc_recving)
+    return -E_IPC_NOT_RECV;
+
+  if (srcva < (void *) UTOP && (((uint32_t) srcva % PGSIZE) != 0))
+    return -E_INVAL;
+
+  if (srcva < (void *) UTOP && (perm)) // TODO adjust perms check
+    return -E_INVAL;
+
+  pte_t *ptestor;
+  struct PageInfo *pp = page_lookup(e->env_pgdir, srcva, &ptestor);
+  if (srcva < (void *) UTOP && !pp)
+    return -E_INVAL;
+
+  // TODO check if srcva is read only in curenv address space
+
+  e->env_ipc_recving = false;
+  e->env_ipc_from = curenv->env_id;
+  e->env_ipc_value = value;
+
+  ret = 0;
+  if (srcva < (void *) UTOP && (((uint32_t) srcva % PGSIZE) == 0)) {
+    ret = sys_page_map(curenv->env_id, srcva, envid, e->env_ipc_dstva, perm);
+    e->env_ipc_perm = perm;
+  }
+
+  return ret;
 }
 
 // Block until a value is ready.  Record that you want to receive
@@ -366,7 +397,13 @@ static int
 sys_ipc_recv(void *dstva)
 {
 	// LAB 4: Your code here.
-	panic("sys_ipc_recv not implemented");
+  if (dstva < (void*) UTOP && (((uint32_t) dstva % PGSIZE) != 0))
+    return -E_INVAL;
+
+  curenv->env_ipc_recving = true;
+  curenv->env_ipc_dstva = dstva;
+  curenv->env_status = ENV_NOT_RUNNABLE;
+  sched_yield();
 	return 0;
 }
 
