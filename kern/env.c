@@ -378,8 +378,8 @@ load_icode(struct Env *e, uint8_t *binary)
 
 	// LAB 3: Your code here.
 	region_alloc(e, (void*) USTACKTOP - PGSIZE, PGSIZE);
-  e->env_tf.tf_eip = bin->e_entry;
-  e->env_tf.tf_eflags = bin->e_flags;
+  //e->env_tf.tf_eip = bin->e_entry;
+  //e->env_tf.tf_eflags = bin->e_flags;
 }
 
 //
