@@ -373,12 +373,12 @@ load_icode(struct Env *e, uint8_t *binary)
       lcr3(PADDR(kern_pgdir));
     }
   }
+  e->env_tf.tf_eip = bin->e_entry;
   // Now map one page for the program's initial stack
 	// at virtual address USTACKTOP - PGSIZE.
 
 	// LAB 3: Your code here.
 	region_alloc(e, (void*) USTACKTOP - PGSIZE, PGSIZE);
-  //e->env_tf.tf_eip = bin->e_entry;
   //e->env_tf.tf_eflags = bin->e_flags;
 }
 
