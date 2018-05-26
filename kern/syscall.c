@@ -452,6 +452,9 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
     case SYS_env_set_pgfault_upcall:
       return sys_env_set_pgfault_upcall((envid_t) a1, (void *) a2);
       break;
+    case SYS_sysinfo:
+      return sys_sysinfo((struct sysinfo*) a1);
+      break;
     default:
       return -E_INVAL;
   }
