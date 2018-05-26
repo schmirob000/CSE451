@@ -353,14 +353,14 @@ sys_ipc_try_send(envid_t envid, uint32_t value, void *srcva, unsigned perm)
   if (ret < 0)
     return ret;
 
-  if (e->env_status == ENV_NOT_RUNNABLE || !e->env_ipc_recving)
+  if (e->env_status != ENV_NOT_RUNNABLE || !e->env_ipc_recving)
     return -E_IPC_NOT_RECV;
 
   if (srcva < (void *) UTOP && (((uint32_t) srcva % PGSIZE) != 0))
     return -E_INVAL;
 
-  if (srcva < (void *) UTOP && (perm)) // TODO adjust perms check
-    return -E_INVAL;
+  //if (srcva < (void *) UTOP) // TODO add perms check
+    //return -E_INVAL;
 
   pte_t *ptestor;
   struct PageInfo *pp = page_lookup(e->env_pgdir, srcva, &ptestor);
@@ -402,6 +402,7 @@ sys_ipc_recv(void *dstva)
 
   curenv->env_ipc_recving = true;
   curenv->env_ipc_dstva = dstva;
+  curenv->env_tf.tf_regs.reg_eax = 0;
   curenv->env_status = ENV_NOT_RUNNABLE;
   sched_yield();
 	return 0;
@@ -454,6 +455,12 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
       break;
     case SYS_sysinfo:
       return sys_sysinfo((struct sysinfo*) a1);
+      break;
+    case SYS_ipc_recv:
+      return sys_ipc_recv((void *) a1);
+      break;
+    case SYS_ipc_try_send:
+      return sys_ipc_try_send((envid_t) a1, (uint32_t) a2, (void *) a3, (unsigned) a4);
       break;
     default:
       return -E_INVAL;

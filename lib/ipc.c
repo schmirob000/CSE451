@@ -23,7 +23,7 @@ int32_t
 ipc_recv(envid_t *from_env_store, void *pg, int *perm_store)
 {
 	// LAB 4: Your code here.
-  if (pg == NULL) pg = (void *) -1; // pg greater than utop now syscall will not map
+  if (pg == NULL) pg = (void *) UTOP+1; // pg greater than utop now syscall will not map
   int ret = sys_ipc_recv(pg);
 
   if (ret < 0) {
@@ -39,8 +39,7 @@ ipc_recv(envid_t *from_env_store, void *pg, int *perm_store)
   if (perm_store)
     *perm_store = thisenv->env_ipc_perm;
 
-
-	return 0;
+	return thisenv->env_ipc_value;
 }
 
 // Send 'val' (and 'pg' with 'perm', if 'pg' is nonnull) to 'toenv'.
@@ -56,7 +55,7 @@ ipc_send(envid_t to_env, uint32_t val, void *pg, int perm)
 {
 	// LAB 4: Your code here.
   int ret = -E_IPC_NOT_RECV;
-  if (pg == NULL) pg = (void *) -1; // pg greater than utop now syscall will not map
+  if (pg == NULL) pg = (void *) UTOP+1; // pg greater than utop now syscall will not map
 
   // try until recvd or fail
   while (ret == -E_IPC_NOT_RECV) {
