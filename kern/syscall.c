@@ -383,6 +383,8 @@ sys_ipc_try_send(envid_t envid, uint32_t value, void *srcva, unsigned perm)
     ret = sys_page_map(curenv->env_id, srcva, envid, e->env_ipc_dstva, perm);
     e->env_ipc_perm = perm;
   }
+  if (ret < 0) {
+  }
   return ret;
 
 }
