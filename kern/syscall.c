@@ -352,21 +352,25 @@ sys_ipc_try_send(envid_t envid, uint32_t value, void *srcva, unsigned perm)
   struct Env *e;
   int ret = envid2env(envid, &e, 0);
 
-  if (ret < 0)
+  if (ret < 0) {
     return ret;
-  if (e->env_status != ENV_NOT_RUNNABLE || !e->env_ipc_recving)
+  }
+  if (e->env_status != ENV_NOT_RUNNABLE || !e->env_ipc_recving) {
     return -E_IPC_NOT_RECV;
-  if (srcva < (void *) UTOP && (((uint32_t) srcva % PGSIZE) != 0))
+  }
+  if (srcva < (void *) UTOP && (((uint32_t) srcva % PGSIZE) != 0)) {
     return -E_INVAL;
+  }
 
   //if (srcva < (void *) UTOP) // TODO add perms check
     //return -E_INVAL;
 
   pte_t *ptestor;
-  struct PageInfo *pp = page_lookup(e->env_pgdir, srcva, &ptestor);
+  struct PageInfo *pp = page_lookup(curenv->env_pgdir, srcva, &ptestor);
 
-  if (srcva < (void *) UTOP && !pp)
+  if (!pp) {
     return -E_INVAL;
+  }
 
   // TODO check if srcva is read only in curenv address space
   e->env_ipc_recving = false;
