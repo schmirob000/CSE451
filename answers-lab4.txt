@@ -19,4 +19,6 @@ lib/pfentry.S, which stores and restores all registers on faults.
 
 Our program passes all tests except primes where it times out. We think this
 timeout may be due to attu's slowness with all the ML algos running on it. The
-logic is however correct on the test.
+logic is however correct on the test. If we only use 1 CPU and increase timeout
+to 60 sec then run primes we can actually get it to run more quickly and pass
+the test.
