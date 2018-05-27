@@ -291,8 +291,6 @@ trap_dispatch(struct Trapframe *tf)
 	// Be careful! In multiprocessors, clock interrupts are
 	// triggered on every CPU.
 	// LAB 4: Your code here.
-  if (tf->tf_trapno == IRQ_OFFSET + IRQ_TIMER) {
-  }
 
 	// Unexpected trap: The user process or the kernel has a bug.
 	print_trapframe(tf);
