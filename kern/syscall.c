@@ -347,15 +347,15 @@ sys_sysinfo(struct sysinfo *info)
 static int
 sys_ipc_try_send(envid_t envid, uint32_t value, void *srcva, unsigned perm)
 {
+
 	// LAB 4: Your code here.
   struct Env *e;
   int ret = envid2env(envid, &e, 0);
+
   if (ret < 0)
     return ret;
-
   if (e->env_status != ENV_NOT_RUNNABLE || !e->env_ipc_recving)
     return -E_IPC_NOT_RECV;
-
   if (srcva < (void *) UTOP && (((uint32_t) srcva % PGSIZE) != 0))
     return -E_INVAL;
 
@@ -364,22 +364,23 @@ sys_ipc_try_send(envid_t envid, uint32_t value, void *srcva, unsigned perm)
 
   pte_t *ptestor;
   struct PageInfo *pp = page_lookup(e->env_pgdir, srcva, &ptestor);
+
   if (srcva < (void *) UTOP && !pp)
     return -E_INVAL;
 
   // TODO check if srcva is read only in curenv address space
-
   e->env_ipc_recving = false;
   e->env_ipc_from = curenv->env_id;
   e->env_ipc_value = value;
+  e->env_status = ENV_RUNNABLE;
 
   ret = 0;
   if (srcva < (void *) UTOP && (((uint32_t) srcva % PGSIZE) == 0)) {
     ret = sys_page_map(curenv->env_id, srcva, envid, e->env_ipc_dstva, perm);
     e->env_ipc_perm = perm;
   }
-
   return ret;
+
 }
 
 // Block until a value is ready.  Record that you want to receive
@@ -396,7 +397,9 @@ sys_ipc_try_send(envid_t envid, uint32_t value, void *srcva, unsigned perm)
 static int
 sys_ipc_recv(void *dstva)
 {
+
 	// LAB 4: Your code here.
+  //
   if (dstva < (void*) UTOP && (((uint32_t) dstva % PGSIZE) != 0))
     return -E_INVAL;
 
@@ -404,8 +407,10 @@ sys_ipc_recv(void *dstva)
   curenv->env_ipc_dstva = dstva;
   curenv->env_tf.tf_regs.reg_eax = 0;
   curenv->env_status = ENV_NOT_RUNNABLE;
+
   sched_yield();
 	return 0;
+
 }
 
 // Dispatches to the correct kernel function, passing the arguments.

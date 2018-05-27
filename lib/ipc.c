@@ -59,7 +59,7 @@ ipc_send(envid_t to_env, uint32_t val, void *pg, int perm)
 
   // try until recvd or fail
   while (ret == -E_IPC_NOT_RECV) {
-    sys_ipc_try_send(to_env, val, pg, perm);
+    ret = sys_ipc_try_send(to_env, val, pg, perm);
     sys_yield(); // TODO for cpu friendlyness?
   }
 
