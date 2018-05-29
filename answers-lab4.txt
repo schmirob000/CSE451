@@ -1,0 +1,24 @@
+Names: Robin Schmit, Sarp Orgul
+Time Spent: 40 hours
+
+Question 1: Because we're now running on multiple CPUs, we need to keep track of
+the actual physical memory, rather than relying on the linker to fill things in,
+since MPBOOTPHYS is different on every CPU.
+
+Question 2: If we use a shared kernel stack, then when we start popping things off
+the stack, we can't be sure that the stack frame above us belongs to the same CPU.
+If it doesn't, terrible things will happen.
+
+Question 3: In our code, we set curenv to e, and then load curenv, and then
+reference curenv. The reason we can dereference it both before and after is
+that it has a page table, so it controls the address context in both cases.
+
+Question 4: This is necessary so that switching from one environ to another
+does not change anything about the execution of a process. It happens in
+lib/pfentry.S, which stores and restores all registers on faults.
+
+Our program passes all tests except primes where it times out. We think this
+timeout may be due to attu's slowness with all the ML algos running on it. The
+logic is however correct on the test. If we only use 1 CPU and increase timeout
+to 60 sec then run primes we can actually get it to run more quickly and pass
+the test.
