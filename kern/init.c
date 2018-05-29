@@ -84,7 +84,6 @@ i386_init(uint32_t magic, uint32_t addr)
 	ENV_CREATE(TEST, ENV_TYPE_USER);
 #else
 	// Touch all you want.
-<<<<<<< HEAD
 	ENV_CREATE(user_icode, ENV_TYPE_USER);
 #endif // TEST*
 
