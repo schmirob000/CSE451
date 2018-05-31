@@ -49,7 +49,7 @@ bc_pgfault(struct UTrapframe *utf)
 	//
 	// LAB 5: you code here:
   void *blk_addr = ROUNDDOWN(addr, BLKSIZE);
-  sys_page_alloc(thisenv->env_id, blk_addr, PTE_P | PTE_U);
+  sys_page_alloc(thisenv->env_id, blk_addr, PTE_P | PTE_U | PTE_W);
   sys_blk_read(blockno*BLKSECTS, blk_addr, BLKSECTS);
 
 	// Clear the dirty bit for the disk block page since we just read the

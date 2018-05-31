@@ -27,12 +27,12 @@ struct pci_driver {
 // pci_attach_class matches the class and subclass of a PCI device
 static struct pci_driver pci_attach_class[] = {
 	{ PCI_CLASS_BRIDGE, PCI_SUBCLASS_BRIDGE_PCI, &pci_bridge_attach },
+  { 0x01, 0x08, &nvme_attach },
 	{ 0, 0, 0 },
 };
 
 // pci_attach_vendor matches the vendor ID and device ID of a PCI device
 static struct pci_driver pci_attach_vendor[] = {
-  //{ 0x01, 0x08, &nvme_attach },
 	{ 0, 0, 0 },
 };
 
