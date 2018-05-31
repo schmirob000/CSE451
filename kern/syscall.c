@@ -12,6 +12,7 @@
 #include <kern/console.h>
 #include <kern/sched.h>
 #include <kern/sysinfo.h>
+#include <kern/nvme.h>
 
 // Print a string to the system console.
 // The string is exactly 'len' characters long.
@@ -432,16 +433,16 @@ static int
 sys_blk_write(uint32_t secno, void *buf, size_t nsecs)
 {
 	// LAB 5: Your code here.
-	// Check that the user has permission for buf.
-	panic("sys_blk_write not implemented");
+	//TODO Check that the user has permission for buf.
+	return nvme_write(secno, buf, nsecs);
 }
 
 static int
 sys_blk_read(uint32_t secno, void *buf, size_t nsecs)
 {
 	// LAB 5: Your code here.
-	// Check that the user has permission for buf.
-	panic("sys_blk_read not implemented");
+	// TODO Check that the user has permission for buf.
+  return nvme_read(secno, buf, nsecs);
 }
 
 // Dispatches to the correct kernel function, passing the arguments.
@@ -497,6 +498,12 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
       break;
     case SYS_ipc_try_send:
       return sys_ipc_try_send((envid_t) a1, (uint32_t) a2, (void *) a3, (unsigned) a4);
+      break;
+    case SYS_blk_read:
+      return sys_blk_read((uint64_t) a1, (void *) a2, (uint16_t) a3);
+      break;
+    case SYS_blk_write:
+      return sys_blk_write((uint64_t) a1, (void *) a2, (uint16_t) a3);
       break;
     default:
       return -E_INVAL;
