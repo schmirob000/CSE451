@@ -1,4 +1,4 @@
 Names: Robin Schmit, Sarp Orgul
 Hours Spent: 12
 
-Question 1: Qemu emulates a machine with three disks: the 
+Question 1: Qemu emulates a machine with three disks: the nvmexpress, the ide, and the sata disks. 

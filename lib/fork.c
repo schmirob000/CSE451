@@ -32,9 +32,11 @@ pgfault(struct UTrapframe *utf)
     panic("non-write page fault in user code, Error: 0x%x, Addr: 0x%x", err, addr);
   }
 
-  if (!((uint32_t) PGOFF(uvpt[(uint32_t) addr/PGSIZE]) & PTE_COW)) {
-    panic("write page fault in user not COW");
-  }
+  pte_t pte = PGOFF(uvpt[(uint32_t) addr/PGSIZE]);
+
+  //if (!(pte & PTE_COW))
+    //panic("write page fault in user not COW");
+
 	// Allocate a new page, map it at a temporary location (PFTEMP),
 	// copy the data from the old page to the new page, then move the new
 	// page to the old page's address.
@@ -120,7 +122,7 @@ fork(void)
       } else if ((perms & PTE_P) && (perms & PTE_U) && (perms & PTE_W)) {
         duppage(envid, addr/PGSIZE);
       } else if ((perms & PTE_P) && (perms & PTE_U)) {
-        sys_page_map(sys_getenvid(), (void*) addr, envid, (void*) addr, PTE_P | PTE_U);
+        sys_page_map(0, (void*) addr, envid, (void*) addr, PTE_P | PTE_U);
       }
     }
   }
