@@ -115,7 +115,9 @@ fork(void)
   for (addr = (uint32_t) 0; addr < (uint32_t) USTACKTOP; addr += PGSIZE) {
     if (uvpd[PDX(addr)] & PTE_P) {
       int perms = uvpt[addr/PGSIZE];
-      if ((perms & PTE_P) && (perms & PTE_U) && (perms & PTE_W)) {
+      if (perms & PTE_SHARE) {
+        sys_page_map(sys_getenvid(), (void*) addr, envid, (void*) addr, PTE_SYSCALL | PTE_SHARE);
+      } else if ((perms & PTE_P) && (perms & PTE_U) && (perms & PTE_W)) {
         duppage(envid, addr/PGSIZE);
       } else if ((perms & PTE_P) && (perms & PTE_U)) {
         sys_page_map(sys_getenvid(), (void*) addr, envid, (void*) addr, PTE_P | PTE_U);

@@ -61,7 +61,7 @@ alloc_block(void)
 	// super->s_nblocks blocks in the disk altogether.
 
 	// LAB 5: Your code here.
-	for (uint32_t i = 0; i < super->s_nblocks; i+=32) {
+	for (uint32_t i = 0; i < super->s_nblocks; i++) {
 	  if (bitmap[i / 32] & BIT(i % 32)) {
 	    bitmap[i / 32] &= ~BIT(i % 32);
       flush_block(diskaddr(i));
@@ -147,18 +147,16 @@ file_block_walk(struct File *f, uint32_t filebno, uint32_t **ppdiskbno, bool all
         if (block_num < 0) 
           return block_num;
 
-        // f->f_indirect = (uint32_t) diskaddr(block_num);
         f->f_indirect = block_num;
  
-        // memset((void*) f->f_indirect, 0, BLKSIZE);
         memset((void*) diskaddr(f->f_indirect), 0, BLKSIZE);
       }
       else {
         return -E_NOT_FOUND;
       }
     }
-    // *ppdiskbno = (uint32_t*) ((filebno-10)*sizeof(void*) + f->f_indirect);
-    *ppdiskbno = (uint32_t*) ((filebno-10)*sizeof(void*) + diskaddr(f->f_indirect));
+    uint32_t * daddr = (uint32_t *) diskaddr(f->f_indirect);
+    *ppdiskbno = &daddr[filebno - 10];
   }
   return 0;
 }
@@ -175,24 +173,24 @@ int
 file_get_block(struct File *f, uint32_t filebno, char **blk)
 {
   // LAB 5: Your code here.
-  uint32_t *ppdiskbno;
-  int ret = file_block_walk(f, filebno, &ppdiskbno, true);
+  uint32_t *block;
+  int ret = file_block_walk(f, filebno, &block, true);
   if (ret < 0)
     return ret;
   
-  void* block = (void*) *ppdiskbno;
-  if (!block) {
+  if (!*block) {
     uint32_t block_num = alloc_block(); 
-    block = (void*) diskaddr(block_num);
     if (filebno <= 9) {
-      f->f_direct[filebno] = (uint32_t) block;
+      f->f_direct[filebno] = block_num;
     } else {
       // uint32_t* fu = (uint32_t*) f->f_indirect; // to keep the compiler happy
       uint32_t* fu = (uint32_t*) diskaddr(f->f_indirect); // to keep the compiler happy
-      fu[filebno-10] = (uint32_t) block;
+      fu[filebno-10] = block_num;
     }
+    *block = block_num;
   }
-  *blk = (char*) block;
+
+  *blk = diskaddr(*block);
 
   return 0;
 }
