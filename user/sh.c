@@ -56,13 +56,16 @@ again:
 
 			// LAB 5: Your code here.
 		 	if ((fd = open(t, O_RDONLY)) < 0) {
-				cprintf("open %s for read: %e", t, fd);
+				cprintf("file not opened: %e", t, fd);
 				exit();
-			} 	
-      if (fd != 0) {
-				dup(fd, 0);
-				close(fd);
-			} 
+			}
+      if (fd == 0) {
+        exit();
+			}
+			if (dup(fd, 0) < 0) {
+        cprintf("dup error");
+      }
+		  close(fd);
       break;
 
 		case '>':	// Output redirection
