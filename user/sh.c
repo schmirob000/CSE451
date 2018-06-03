@@ -32,6 +32,18 @@ again:
 	while (1) {
 		switch ((c = gettoken(0, &t))) {
 
+    case ';':
+      if ((r = fork()) < 0) {
+				cprintf("fork: %e", r);
+				exit();
+			}
+			if (r == 0) {
+				goto runit;
+			} else {
+				goto again;
+			}
+      break; // just in case
+
 		case 'w':	// Add an argument
 			if (argc == MAXARGS) {
 				cprintf("too many arguments\n");
