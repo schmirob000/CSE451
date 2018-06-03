@@ -227,6 +227,12 @@ vprintfmt(void (*putch)(int, void*), void *putdat, const char *fmt, va_list ap)
 			base = 16;
 			goto number;
 
+    // change color
+    case 'a':
+			num = getuint(&ap, lflag);
+      color = num;
+      break;
+
 		// (unsigned) hexadecimal
 		case 'x':
 			num = getuint(&ap, lflag);

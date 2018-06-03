@@ -3,6 +3,8 @@
 
 #include <inc/types.h>
 
+extern int color;
+
 int	strlen(const char *s);
 int	strnlen(const char *s, size_t size);
 char *	strcpy(char *dst, const char *src);
