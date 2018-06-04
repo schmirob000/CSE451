@@ -360,6 +360,11 @@ kbd_proc_data(void)
 		outb(0x92, 0x3); // courtesy of Chris Frost
 	}
 
+	if (!(~shift & (CTL)) && c == 'c') {
+		cprintf("Killing!\n");
+		outb(0x92, 0x3); // courtesy of Chris Frost
+	}
+
 	return c;
 }
 
