@@ -62,6 +62,7 @@ int	sys_ipc_try_send(envid_t to_env, uint32_t value, void *pg, int perm);
 int	sys_ipc_recv(void *rcv_pg);
 int	sys_blk_write(uint32_t secno, const void *buf, size_t nsecs);
 int	sys_blk_read(uint32_t secno, void *buf, size_t nsecs);
+int sys_set_color(uint32_t col);
 
 // This must be inlined.  Exercise for reader: why?
 static inline envid_t __attribute__((always_inline))

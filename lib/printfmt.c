@@ -8,6 +8,8 @@
 #include <inc/stdarg.h>
 #include <inc/error.h>
 
+int color = 0;
+
 /*
  * Space or zero padding and a field width are supported for the numeric
  * formats only.
@@ -231,6 +233,7 @@ vprintfmt(void (*putch)(int, void*), void *putdat, const char *fmt, va_list ap)
     case 'a':
 			num = getuint(&ap, lflag);
       color = num;
+      cprintf("case a, color %x\n", color);
       break;
 
 		// (unsigned) hexadecimal
@@ -241,10 +244,7 @@ vprintfmt(void (*putch)(int, void*), void *putdat, const char *fmt, va_list ap)
 			printnum(putch, putdat, num, base, width, padc);
 			break;
 
-		// escaped '%' character
-		case '%':
-			putch(ch, putdat);
-			break;
+
 
 		// unrecognized escape sequence - just print it literally
 		default:

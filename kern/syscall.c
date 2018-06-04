@@ -451,6 +451,13 @@ sys_blk_read(uint32_t secno, void *buf, size_t nsecs)
   return nvme_read(secno, buf, nsecs);
 }
 
+static int
+sys_set_color(uint32_t col)
+{
+  color = col;
+  return 0;
+}
+
 // Dispatches to the correct kernel function, passing the arguments.
   int32_t
 syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, uint32_t a5)
@@ -513,6 +520,9 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
       break;
     case SYS_env_set_trapframe:
       return sys_env_set_trapframe((envid_t) a1, (struct Trapframe *) a2);
+      break;
+    case SYS_set_color:
+      return sys_set_color((uint32_t) a1);
       break;
     default:
       return -E_INVAL;

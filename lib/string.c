@@ -8,8 +8,6 @@
 // Primespipe runs 3x faster this way.
 #define ASM 1
 
-int color = 0;
-
 int
 strlen(const char *s)
 {

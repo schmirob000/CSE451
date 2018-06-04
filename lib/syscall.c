@@ -134,3 +134,9 @@ sys_blk_read(uint32_t secno, void *buf, size_t nsecs)
 {
 	return syscall(SYS_blk_read, 0, secno, (uint32_t)buf, nsecs, 0, 0);
 }
+
+int 
+sys_set_color(uint32_t col)
+{
+  return syscall(SYS_set_color, 0, col, 0, 0, 0, 0);
+}
