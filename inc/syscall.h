@@ -14,6 +14,7 @@ enum {
 	SYS_env_set_status,
 	SYS_env_set_trapframe,
 	SYS_env_set_pgfault_upcall,
+	SYS_env_set_ctrlc_upcall,
 	SYS_yield,
 	SYS_sysinfo,
 	SYS_ipc_try_send,
@@ -21,6 +22,7 @@ enum {
 	SYS_blk_write,
 	SYS_blk_read,
   SYS_set_color,
+  SYS_set_priority,
 	NSYSCALLS
 };
 

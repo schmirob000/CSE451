@@ -4,9 +4,11 @@
 #include <kern/env.h>
 #include <kern/pmap.h>
 #include <kern/monitor.h>
+#include <kern/sysinfo.h>
 
 void sched_halt(void);
 
+static unsigned int rand = 1;
 // Choose a user environment to run and run it.
 void
 sched_yield(void)
@@ -30,18 +32,23 @@ sched_yield(void)
 
 	// LAB 4: Your code here.
   envid_t runningEnv = curenv ? ENVX(curenv->env_id) : 0;
+  int size = 0;
+  envid_t runnables[NENV*4];
 
   for (int i = runningEnv; i < NENV + runningEnv; i++) {
     int envNum = i % NENV;
-    if (envs[envNum].env_status == ENV_RUNNABLE) {
-      env_run(&envs[envNum]);
+    if (envs[envNum].env_status == ENV_RUNNABLE || 
+        envs[envNum].env_status == ENV_RUNNING) {
+      //cprintf("env_id= %d", envs[envNum].env_id);
+      for (int i = 0; i < envs[envNum].env_priority%10; i++)
+        runnables[size++] = envNum;
     }
   }
-
-  if (curenv && curenv->env_status == ENV_RUNNING) {
-    env_run(curenv);
-  }
-
+  
+  rand = (rand * 1103515245U + 12345U) & 0x7fffffffU;
+  int runnum = rand % size;
+  env_run(&envs[runnables[runnum]]);
+  
 	// sched_halt never returns
 	sched_halt();
 }

@@ -140,3 +140,9 @@ sys_set_color(uint32_t col)
 {
   return syscall(SYS_set_color, 0, col, 0, 0, 0, 0);
 }
+
+int 
+sys_set_priority(int priority)
+{
+  return syscall(SYS_set_priority, 0, priority, 0, 0, 0, 0);
+}

@@ -458,6 +458,15 @@ sys_set_color(uint32_t col)
   return 0;
 }
 
+static int
+sys_set_priority(int priority)
+{
+  if (priority > 9) priority = 9;
+  if (priority < 1) priority = 1;
+  curenv->env_priority = priority;
+  return 0;
+}
+
 // Dispatches to the correct kernel function, passing the arguments.
   int32_t
 syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, uint32_t a5)
@@ -523,6 +532,9 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
       break;
     case SYS_set_color:
       return sys_set_color((uint32_t) a1);
+      break;
+    case SYS_set_priority:
+      return sys_set_priority((int) a1);
       break;
     default:
       return -E_INVAL;

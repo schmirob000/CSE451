@@ -109,6 +109,7 @@ fork(void)
   if (envid == 0) {
 		thisenv = &envs[ENVX(sys_getenvid())];
     set_pgfault_handler(&pgfault);
+    sys_set_priority(thisenv->env_priority + 1);
     return 0;
   }
   sys_env_set_pgfault_upcall(envid, thisenv->env_pgfault_upcall);

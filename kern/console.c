@@ -7,6 +7,7 @@
 #include <inc/assert.h>
 
 #include <kern/console.h>
+#include <kern/env.h>
 
 static void cons_intr(int (*proc)(void));
 static void cons_putc(int c);
@@ -357,11 +358,6 @@ kbd_proc_data(void)
 	// Ctrl-Alt-Del: reboot
 	if (!(~shift & (CTL | ALT)) && c == KEY_DEL) {
 		cprintf("Rebooting!\n");
-		outb(0x92, 0x3); // courtesy of Chris Frost
-	}
-
-	if (!(~shift & (CTL)) && c == 'c') {
-		cprintf("Killing!\n");
 		outb(0x92, 0x3); // courtesy of Chris Frost
 	}
 

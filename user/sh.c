@@ -31,7 +31,7 @@ again:
 	argc = 0;
 	while (1) {
 		switch ((c = gettoken(0, &t))) {
-
+   
     case ';':
       if ((r = fork()) < 0) {
 				cprintf("fork: %e", r);
@@ -283,6 +283,8 @@ umain(int argc, char **argv)
 {
 	int r, interactive, echocmds;
 	struct Argstate args;
+
+  sys_set_priority(1);
 
 	interactive = '?';
 	echocmds = 0;

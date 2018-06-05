@@ -1,0 +1,24 @@
+Names: Robin Schmit, Sarp Orgul
+Time Spent: 12 hours
+
+Two Challenge Problems: one is color-printf, the other is lottery scheduling.
+
+In color-printf, we discovered that kernel mode doesn't easily access user-mode
+global variables, which is where we originally attempted to store the color 
+field. We overcame this using a syscall, as demonstrated in user/hello.c
+We modified cga_putc in console.c to use color (a global variable) as the 
+default color (permanently) instead of the normal 0x0700. 
+
+For scheduler, we iterate over all environments, and for each runnable/running
+one, we add a number of tickets to an array equal to its priority (1-9). Then
+we randomly select a ticket from this array (using uptime for randomness), and
+run that env. We set the shell priority to be 1, the default priority to be 4,
+and a child's priority to be +1 from its parent. We added a syscall to change
+priority, each process can change its own priority, but even if evil users
+max out their priority, it's still random. 
+  We originally had a while(1) loop for randomness, but the probability that
+we selected a runnable env was so low that it wasn't usable. This scheduler is
+still a little slower than the round-robin. It's testable with forktree - the
+outputs of forktree are non-deterministic, but the shell is often but not always
+the last env to run (printing that $ sign at the bottom where it belongs),
+since its priority is 1. This is desirable. 

@@ -234,6 +234,7 @@ env_alloc(struct Env **newenv_store, envid_t parent_id)
 	e->env_type = ENV_TYPE_USER;
 	e->env_status = ENV_RUNNABLE;
 	e->env_runs = 0;
+  e->env_priority = 4;
 
 	// Clear out all the saved register state,
 	// to prevent the register values
@@ -397,6 +398,18 @@ env_create(uint8_t *binary, enum EnvType type)
 	env_alloc(&e, 0);
   e->env_type = type;
 
+  load_icode(e, binary);
+}
+
+void
+env_replace(uint8_t *binary, envid_t env) 
+{
+  struct Env *e;
+  envid2env(env, &e, 0);
+  e->env_runs = 0;
+  e->env_pgfault_upcall = 0;
+  // new address space?
+  
   load_icode(e, binary);
 }
 
